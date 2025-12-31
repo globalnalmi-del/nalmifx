@@ -49,8 +49,11 @@ router.post('/types', protectAdmin, async (req, res) => {
       color
     } = req.body;
 
+    // Auto-generate slug from name if not provided
+    const finalSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
     // Check if slug exists
-    const existing = await ChallengeType.findOne({ slug });
+    const existing = await ChallengeType.findOne({ slug: finalSlug });
     if (existing) {
       return res.status(400).json({
         success: false,
@@ -60,7 +63,7 @@ router.post('/types', protectAdmin, async (req, res) => {
 
     const challengeType = new ChallengeType({
       name,
-      slug,
+      slug: finalSlug,
       description,
       type,
       totalPhases,
