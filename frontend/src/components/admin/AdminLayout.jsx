@@ -69,7 +69,7 @@ const AdminLayout = ({ children, activeSection, setActiveSection }) => {
           {!sidebarCollapsed && (
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                B4X
+                NFX
               </div>
               <span className="font-bold" style={{ color: 'var(--text-primary)' }}>Admin Panel</span>
             </div>

@@ -887,11 +887,8 @@ class TradeEngine {
       if (socketId) {
         this.io.to(socketId).emit(event, data);
       }
-      // Also broadcast to user's room
+      // Broadcast ONLY to user's room (not to all clients)
       this.io.to(`user_${userId}`).emit(event, data);
-      
-      // Broadcast to all clients for real-time updates (positions table refresh)
-      this.io.emit(event, { ...data, userId });
     }
   }
 
