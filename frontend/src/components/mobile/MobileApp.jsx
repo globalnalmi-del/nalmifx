@@ -52,12 +52,14 @@ const MobileApp = () => {
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col" style={{ backgroundColor: isDark ? '#000000' : '#f5f5f7' }}>
+    <div className="h-screen w-screen flex flex-col overflow-hidden" style={{ backgroundColor: isDark ? '#000000' : '#f5f5f7' }}>
       {/* Main Content - with padding for bottom nav */}
       <div 
-        className="flex-1 overflow-y-auto"
+        className="flex-1 min-h-0"
         style={{ 
-          paddingBottom: !['trade', 'ib', 'copy', 'support', 'profile'].includes(activeTab) ? '70px' : '0'
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          paddingBottom: !['trade', 'ib', 'copy', 'support', 'profile'].includes(activeTab) ? '80px' : '0'
         }}
       >
         {renderContent()}

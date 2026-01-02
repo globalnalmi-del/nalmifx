@@ -209,7 +209,7 @@ const MobileAccounts = ({ onOpenTrading }) => {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto pb-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <div className="pb-8" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {/* Header */}
       <div className="px-4 pt-3 pb-2">
         <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Trading Accounts</h1>

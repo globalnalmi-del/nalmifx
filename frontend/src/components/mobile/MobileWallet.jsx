@@ -226,10 +226,10 @@ const MobileWallet = () => {
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 p-4 pb-24">
         {/* DEPOSIT TAB */}
         {activeTab === 'deposit' && (
-          <div className="space-y-4">
+          <div className="space-y-4 pb-4">
             {/* Payment Method */}
             <div className="flex gap-2">
               <button

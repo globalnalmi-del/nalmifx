@@ -158,7 +158,7 @@ const MobileHome = () => {
   const textSecondary = isDark ? '#6b7280' : '#8e8e93'
 
   return (
-    <div className="h-full overflow-y-auto p-4 pb-20" style={{ backgroundColor: bgPrimary }}>
+    <div className="h-full p-4 pb-8" style={{ backgroundColor: bgPrimary }}>
       {/* Header */}
       <div className="mb-4">
         <p className="text-xs" style={{ color: textSecondary }}>{getGreeting()}</p>
