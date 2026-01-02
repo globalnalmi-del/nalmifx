@@ -209,7 +209,7 @@ const MobileAccounts = ({ onOpenTrading }) => {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto pb-20" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <div className="flex-1 overflow-y-auto pb-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {/* Header */}
       <div className="px-4 pt-3 pb-2">
         <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Trading Accounts</h1>
@@ -531,9 +531,9 @@ const MobileAccounts = ({ onOpenTrading }) => {
 
       {/* Open Account Modal */}
       {showNewAccountModal && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end">
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end" style={{ zIndex: 9999 }}>
           <div 
-            className="w-full max-h-[85vh] overflow-y-auto rounded-t-3xl"
+            className="w-full max-h-[90vh] overflow-y-auto rounded-t-3xl pb-8"
             style={{ backgroundColor: 'var(--bg-secondary)' }}
           >
             <div className="sticky top-0 px-4 py-3 border-b flex items-center justify-between" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)' }}>
@@ -545,9 +545,9 @@ const MobileAccounts = ({ onOpenTrading }) => {
               </button>
             </div>
 
-            <div className="p-4">
+            <div className="p-4 pb-24">
               {!selectedAccountType ? (
-                <div className="space-y-3">
+                <div className="space-y-3 pb-4">
                   {/* Demo Option */}
                   {demoAccountType && (
                     <button
@@ -598,7 +598,7 @@ const MobileAccounts = ({ onOpenTrading }) => {
                   })}
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 pb-20">
                   {/* Selected Type */}
                   <div className="p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-hover)' }}>
                     <p className="font-medium" style={{ color: 'var(--text-primary)' }}>

@@ -105,11 +105,11 @@ const AdminLogin = ({ onAdminLogin }) => {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
+          {/* <div className="mt-6 text-center">
             <p className="text-gray-500 text-sm">
               Default: admin@nalmifx.com / Admin@123
             </p>
-          </div>
+          </div> */}
         </div>
 
         {/* Back to User Login */}

@@ -55,7 +55,7 @@ const MobileApp = () => {
     <div className="h-screen w-screen flex flex-col" style={{ backgroundColor: isDark ? '#000000' : '#f5f5f7' }}>
       {/* Main Content - with padding for bottom nav */}
       <div 
-        className="flex-1 overflow-hidden"
+        className="flex-1 overflow-y-auto"
         style={{ 
           paddingBottom: !['trade', 'ib', 'copy', 'support', 'profile'].includes(activeTab) ? '70px' : '0'
         }}
@@ -66,13 +66,14 @@ const MobileApp = () => {
       {/* Bottom Navigation - Fixed at bottom, visible on all phones */}
       {!['trade', 'ib', 'copy', 'support', 'profile'].includes(activeTab) && (
         <nav 
-          className="mobile-bottom-nav flex items-center justify-around"
+          className="mobile-bottom-nav flex items-center justify-around fixed bottom-0 left-0 right-0"
           style={{ 
             backgroundColor: isDark ? '#1c1c1e' : '#ffffff',
             borderTop: `1px solid ${isDark ? '#2c2c2e' : '#e5e5ea'}`,
             paddingTop: '10px',
             paddingBottom: 'calc(10px + env(safe-area-inset-bottom, 8px))',
-            minHeight: '65px'
+            minHeight: '65px',
+            zIndex: 100
           }}
         >
           {tabs.map((tab) => (
