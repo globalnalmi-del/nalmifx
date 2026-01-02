@@ -254,31 +254,78 @@ const MobileWallet = () => {
                 <p className="text-xs font-medium" style={{ color: textPrimary }}>Payment Details</p>
                 {paymentMethod === 'bank' && (
                   <>
-                    {bankSettings.bankName && (
-                      <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
-                        <div><p className="text-xs" style={{ color: textSecondary }}>Bank</p><p className="text-sm" style={{ color: textPrimary }}>{bankSettings.bankName}</p></div>
-                        <button onClick={() => copyToClipboard(bankSettings.bankName, 'bank')} className="p-1">{copied === 'bank' ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
+                    {/* Multiple bank accounts (new format) */}
+                    {bankSettings.bankAccounts?.filter(b => b.isActive).map((bank, idx) => (
+                      <div key={idx} className="space-y-2 mb-3 pb-3" style={{ borderBottom: idx < bankSettings.bankAccounts.filter(b => b.isActive).length - 1 ? `1px solid ${borderColor}` : 'none' }}>
+                        <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
+                          <div><p className="text-xs" style={{ color: textSecondary }}>Bank</p><p className="text-sm" style={{ color: textPrimary }}>{bank.bankName}</p></div>
+                          <button onClick={() => copyToClipboard(bank.bankName, `bank-${idx}`)} className="p-1">{copied === `bank-${idx}` ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
+                        </div>
+                        <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
+                          <div><p className="text-xs" style={{ color: textSecondary }}>Account No.</p><p className="text-sm font-mono" style={{ color: textPrimary }}>{bank.accountNumber}</p></div>
+                          <button onClick={() => copyToClipboard(bank.accountNumber, `acc-${idx}`)} className="p-1">{copied === `acc-${idx}` ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
+                        </div>
+                        <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
+                          <div><p className="text-xs" style={{ color: textSecondary }}>Account Holder</p><p className="text-sm" style={{ color: textPrimary }}>{bank.accountHolderName}</p></div>
+                          <button onClick={() => copyToClipboard(bank.accountHolderName, `holder-${idx}`)} className="p-1">{copied === `holder-${idx}` ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
+                        </div>
+                        <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
+                          <div><p className="text-xs" style={{ color: textSecondary }}>IFSC</p><p className="text-sm font-mono" style={{ color: textPrimary }}>{bank.ifscCode}</p></div>
+                          <button onClick={() => copyToClipboard(bank.ifscCode, `ifsc-${idx}`)} className="p-1">{copied === `ifsc-${idx}` ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
+                        </div>
                       </div>
+                    ))}
+                    {/* Legacy single bank (fallback) */}
+                    {(!bankSettings.bankAccounts || bankSettings.bankAccounts.filter(b => b.isActive).length === 0) && bankSettings.bankName && (
+                      <>
+                        <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
+                          <div><p className="text-xs" style={{ color: textSecondary }}>Bank</p><p className="text-sm" style={{ color: textPrimary }}>{bankSettings.bankName}</p></div>
+                          <button onClick={() => copyToClipboard(bankSettings.bankName, 'bank')} className="p-1">{copied === 'bank' ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
+                        </div>
+                        {bankSettings.accountNumber && (
+                          <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
+                            <div><p className="text-xs" style={{ color: textSecondary }}>Account No.</p><p className="text-sm font-mono" style={{ color: textPrimary }}>{bankSettings.accountNumber}</p></div>
+                            <button onClick={() => copyToClipboard(bankSettings.accountNumber, 'acc')} className="p-1">{copied === 'acc' ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
+                          </div>
+                        )}
+                        {bankSettings.ifscCode && (
+                          <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
+                            <div><p className="text-xs" style={{ color: textSecondary }}>IFSC</p><p className="text-sm font-mono" style={{ color: textPrimary }}>{bankSettings.ifscCode}</p></div>
+                            <button onClick={() => copyToClipboard(bankSettings.ifscCode, 'ifsc')} className="p-1">{copied === 'ifsc' ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
+                          </div>
+                        )}
+                      </>
                     )}
-                    {bankSettings.accountNumber && (
-                      <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
-                        <div><p className="text-xs" style={{ color: textSecondary }}>Account No.</p><p className="text-sm font-mono" style={{ color: textPrimary }}>{bankSettings.accountNumber}</p></div>
-                        <button onClick={() => copyToClipboard(bankSettings.accountNumber, 'acc')} className="p-1">{copied === 'acc' ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
-                      </div>
-                    )}
-                    {bankSettings.ifscCode && (
-                      <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
-                        <div><p className="text-xs" style={{ color: textSecondary }}>IFSC</p><p className="text-sm font-mono" style={{ color: textPrimary }}>{bankSettings.ifscCode}</p></div>
-                        <button onClick={() => copyToClipboard(bankSettings.ifscCode, 'ifsc')} className="p-1">{copied === 'ifsc' ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
-                      </div>
+                    {/* No bank accounts message */}
+                    {(!bankSettings.bankAccounts || bankSettings.bankAccounts.filter(b => b.isActive).length === 0) && !bankSettings.bankName && (
+                      <p className="text-sm text-center py-2" style={{ color: textSecondary }}>No bank accounts available</p>
                     )}
                   </>
                 )}
-                {paymentMethod === 'upi' && bankSettings.upiId && (
-                  <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
-                    <div><p className="text-xs" style={{ color: textSecondary }}>UPI ID</p><p className="text-sm font-mono" style={{ color: textPrimary }}>{bankSettings.upiId}</p></div>
-                    <button onClick={() => copyToClipboard(bankSettings.upiId, 'upi')} className="p-1">{copied === 'upi' ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
-                  </div>
+                {paymentMethod === 'upi' && (
+                  <>
+                    {/* Multiple UPI accounts (new format) */}
+                    {bankSettings.upiAccounts?.filter(u => u.isActive).map((upi, idx) => (
+                      <div key={idx} className="space-y-2 mb-3 pb-3" style={{ borderBottom: idx < bankSettings.upiAccounts.filter(u => u.isActive).length - 1 ? `1px solid ${borderColor}` : 'none' }}>
+                        <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
+                          <div><p className="text-xs" style={{ color: textSecondary }}>{upi.upiName || 'UPI ID'}</p><p className="text-sm font-mono" style={{ color: textPrimary }}>{upi.upiId}</p></div>
+                          <button onClick={() => copyToClipboard(upi.upiId, `upi-${idx}`)} className="p-1">{copied === `upi-${idx}` ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
+                        </div>
+                        {upi.qrCode && <img src={upi.qrCode} alt="QR" className="w-full h-32 object-contain rounded-lg" style={{ backgroundColor: bgInput }} />}
+                      </div>
+                    ))}
+                    {/* Legacy single UPI (fallback) */}
+                    {(!bankSettings.upiAccounts || bankSettings.upiAccounts.filter(u => u.isActive).length === 0) && bankSettings.upiId && (
+                      <div className="flex justify-between items-center p-2 rounded-lg" style={{ backgroundColor: bgInput }}>
+                        <div><p className="text-xs" style={{ color: textSecondary }}>UPI ID</p><p className="text-sm font-mono" style={{ color: textPrimary }}>{bankSettings.upiId}</p></div>
+                        <button onClick={() => copyToClipboard(bankSettings.upiId, 'upi')} className="p-1">{copied === 'upi' ? <Check size={14} color="#22c55e" /> : <Copy size={14} color={textSecondary} />}</button>
+                      </div>
+                    )}
+                    {/* No UPI accounts message */}
+                    {(!bankSettings.upiAccounts || bankSettings.upiAccounts.filter(u => u.isActive).length === 0) && !bankSettings.upiId && (
+                      <p className="text-sm text-center py-2" style={{ color: textSecondary }}>No UPI accounts available</p>
+                    )}
+                  </>
                 )}
               </div>
             )}
