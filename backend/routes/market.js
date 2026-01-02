@@ -76,6 +76,69 @@ function generateEconomicCalendar() {
   })).sort((a, b) => new Date(a.time) - new Date(b.time));
 }
 
+// @route   GET /api/market/instruments
+// @desc    Get all available trading instruments
+// @access  Public
+router.get('/instruments', async (req, res) => {
+  try {
+    const instruments = [
+      // Major Forex Pairs
+      { symbol: 'EURUSD', name: 'EUR/USD', category: 'forex', segment: 'major', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'GBPUSD', name: 'GBP/USD', category: 'forex', segment: 'major', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'USDJPY', name: 'USD/JPY', category: 'forex', segment: 'major', pip: 0.01, contractSize: 100000 },
+      { symbol: 'USDCHF', name: 'USD/CHF', category: 'forex', segment: 'major', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'AUDUSD', name: 'AUD/USD', category: 'forex', segment: 'major', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'NZDUSD', name: 'NZD/USD', category: 'forex', segment: 'major', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'USDCAD', name: 'USD/CAD', category: 'forex', segment: 'major', pip: 0.0001, contractSize: 100000 },
+      // Cross Pairs
+      { symbol: 'EURGBP', name: 'EUR/GBP', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'EURJPY', name: 'EUR/JPY', category: 'forex', segment: 'cross', pip: 0.01, contractSize: 100000 },
+      { symbol: 'GBPJPY', name: 'GBP/JPY', category: 'forex', segment: 'cross', pip: 0.01, contractSize: 100000 },
+      { symbol: 'EURAUD', name: 'EUR/AUD', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'EURCAD', name: 'EUR/CAD', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'EURCHF', name: 'EUR/CHF', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'GBPAUD', name: 'GBP/AUD', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'GBPCAD', name: 'GBP/CAD', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'GBPCHF', name: 'GBP/CHF', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'AUDCAD', name: 'AUD/CAD', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'AUDCHF', name: 'AUD/CHF', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'AUDJPY', name: 'AUD/JPY', category: 'forex', segment: 'cross', pip: 0.01, contractSize: 100000 },
+      { symbol: 'AUDNZD', name: 'AUD/NZD', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'CADJPY', name: 'CAD/JPY', category: 'forex', segment: 'cross', pip: 0.01, contractSize: 100000 },
+      { symbol: 'CHFJPY', name: 'CHF/JPY', category: 'forex', segment: 'cross', pip: 0.01, contractSize: 100000 },
+      { symbol: 'NZDCAD', name: 'NZD/CAD', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'NZDCHF', name: 'NZD/CHF', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'NZDJPY', name: 'NZD/JPY', category: 'forex', segment: 'cross', pip: 0.01, contractSize: 100000 },
+      { symbol: 'CADCHF', name: 'CAD/CHF', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'EURNZD', name: 'EUR/NZD', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      { symbol: 'GBPNZD', name: 'GBP/NZD', category: 'forex', segment: 'cross', pip: 0.0001, contractSize: 100000 },
+      // Metals
+      { symbol: 'XAUUSD', name: 'Gold', category: 'metals', segment: 'metals', pip: 0.1, contractSize: 100 },
+      { symbol: 'XAGUSD', name: 'Silver', category: 'metals', segment: 'metals', pip: 0.01, contractSize: 5000 },
+      // Crypto
+      { symbol: 'BTCUSD', name: 'Bitcoin', category: 'crypto', segment: 'crypto', pip: 1, contractSize: 1 },
+      { symbol: 'ETHUSD', name: 'Ethereum', category: 'crypto', segment: 'crypto', pip: 0.1, contractSize: 1 },
+      { symbol: 'LTCUSD', name: 'Litecoin', category: 'crypto', segment: 'crypto', pip: 0.01, contractSize: 1 },
+      { symbol: 'XRPUSD', name: 'Ripple', category: 'crypto', segment: 'crypto', pip: 0.0001, contractSize: 1 },
+      // Indices
+      { symbol: 'US30', name: 'Dow Jones', category: 'indices', segment: 'indices', pip: 1, contractSize: 1 },
+      { symbol: 'US500', name: 'S&P 500', category: 'indices', segment: 'indices', pip: 0.1, contractSize: 1 },
+      { symbol: 'NAS100', name: 'Nasdaq 100', category: 'indices', segment: 'indices', pip: 0.1, contractSize: 1 },
+      { symbol: 'UK100', name: 'FTSE 100', category: 'indices', segment: 'indices', pip: 0.1, contractSize: 1 },
+      { symbol: 'GER40', name: 'DAX 40', category: 'indices', segment: 'indices', pip: 0.1, contractSize: 1 },
+    ];
+
+    res.json({
+      success: true,
+      count: instruments.length,
+      data: instruments
+    });
+  } catch (error) {
+    console.error('Get instruments error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch instruments' });
+  }
+});
+
 // @route   GET /api/market/news
 // @desc    Get real-time market news from multiple sources
 // @access  Public
