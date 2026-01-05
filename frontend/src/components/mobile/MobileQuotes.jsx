@@ -592,53 +592,82 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
 
               {/* Buy/Sell Buttons - Slim & Attractive */}
               {orderType === 'market' ? (
-                <div style={{ display: 'flex', WebkitFlexDirection: 'row', flexDirection: 'row' }}>
+                <div style={{ 
+                  display: '-webkit-flex', 
+                  display: 'flex', 
+                  flexDirection: 'row',
+                  gap: '8px'
+                }}>
                   <button
                     onClick={() => handleTrade('sell')}
                     disabled={loading}
-                    className="flex-1 py-3 rounded-full font-semibold text-white disabled:opacity-50"
                     style={{ 
-                      background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                      WebkitBackground: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                      flex: 1,
+                      padding: '12px 16px',
+                      borderRadius: '9999px',
                       backgroundColor: '#ef4444',
+                      color: '#ffffff',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: '-webkit-flex',
                       display: 'flex',
-                      WebkitAlignItems: 'center',
                       alignItems: 'center',
-                      WebkitJustifyContent: 'center',
                       justifyContent: 'center',
-                      marginRight: '8px'
+                      gap: '6px',
+                      opacity: loading ? 0.5 : 1,
+                      WebkitAppearance: 'none',
+                      appearance: 'none'
                     }}
                   >
                     <span>SELL</span>
-                    <span className="text-xs opacity-80" style={{ marginLeft: '6px' }}>{formatPrice(prices[selectedSymbol]?.bid, selectedSymbol)}</span>
+                    <span style={{ fontSize: '12px', opacity: 0.8 }}>{formatPrice(prices[selectedSymbol]?.bid, selectedSymbol)}</span>
                   </button>
                   <button
                     onClick={() => handleTrade('buy')}
                     disabled={loading}
-                    className="flex-1 py-3 rounded-full font-semibold text-white disabled:opacity-50"
                     style={{ 
-                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                      WebkitBackground: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      flex: 1,
+                      padding: '12px 16px',
+                      borderRadius: '9999px',
                       backgroundColor: '#3b82f6',
+                      color: '#ffffff',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: '-webkit-flex',
                       display: 'flex',
-                      WebkitAlignItems: 'center',
                       alignItems: 'center',
-                      WebkitJustifyContent: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      gap: '6px',
+                      opacity: loading ? 0.5 : 1,
+                      WebkitAppearance: 'none',
+                      appearance: 'none'
                     }}
                   >
                     <span>BUY</span>
-                    <span className="text-xs opacity-80" style={{ marginLeft: '6px' }}>{formatPrice(prices[selectedSymbol]?.ask, selectedSymbol)}</span>
+                    <span style={{ fontSize: '12px', opacity: 0.8 }}>{formatPrice(prices[selectedSymbol]?.ask, selectedSymbol)}</span>
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={() => handleTrade(pendingOrderType.toLowerCase().includes('buy') ? 'buy' : 'sell')}
                   disabled={loading}
-                  className="w-full py-3 rounded-full font-semibold text-white disabled:opacity-50"
                   style={{ 
-                    background: pendingOrderType.includes('BUY') ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                    backgroundColor: pendingOrderType.includes('BUY') ? '#3b82f6' : '#ef4444'
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '9999px',
+                    backgroundColor: pendingOrderType.includes('BUY') ? '#3b82f6' : '#ef4444',
+                    color: '#ffffff',
+                    fontWeight: '600',
+                    fontSize: '14px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    opacity: loading ? 0.5 : 1,
+                    WebkitAppearance: 'none',
+                    appearance: 'none'
                   }}
                 >
                   {loading ? 'Placing...' : `Place ${pendingOrderType}`}

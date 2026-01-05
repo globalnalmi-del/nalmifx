@@ -222,53 +222,68 @@ const MobileChart = () => {
 
       {/* Slim Buy/Sell Panel at Bottom */}
       <div 
-        className="px-3 py-2 flex items-center" 
+        className="px-3 py-2"
         style={{ 
           backgroundColor: isDark ? '#0a0a0a' : '#fff', 
           borderTop: `1px solid ${isDark ? '#1a1a1a' : '#e5e5ea'}`,
+          display: '-webkit-flex',
           display: 'flex',
-          WebkitFlexDirection: 'row',
-          flexDirection: 'row'
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: '8px'
         }}
       >
         <button
           onClick={() => handleTrade('sell')}
           disabled={loading}
-          className="flex-1 py-2.5 rounded-full font-semibold text-white text-sm disabled:opacity-50"
           style={{ 
-            background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-            WebkitBackground: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+            flex: 1,
+            padding: '10px 16px',
+            borderRadius: '9999px',
             backgroundColor: '#ef4444',
+            color: '#ffffff',
+            fontWeight: '600',
+            fontSize: '14px',
+            border: 'none',
+            cursor: 'pointer',
+            display: '-webkit-flex',
             display: 'flex',
-            WebkitAlignItems: 'center',
             alignItems: 'center',
-            WebkitJustifyContent: 'center',
             justifyContent: 'center',
-            marginRight: '8px'
+            gap: '6px',
+            opacity: loading ? 0.5 : 1,
+            WebkitAppearance: 'none',
+            appearance: 'none'
           }}
         >
           <span>SELL</span>
-          <span className="text-xs opacity-80" style={{ marginLeft: '6px' }}>{formatPrice(price.bid, selectedSymbol)}</span>
+          <span style={{ fontSize: '12px', opacity: 0.8 }}>{formatPrice(price.bid, selectedSymbol)}</span>
         </button>
         
         {/* Enhanced Lot Size Selector */}
         <button
           onClick={() => setShowLotPicker(true)}
-          className="px-3 py-2 rounded-full text-center text-sm font-bold"
           style={{ 
+            padding: '8px 12px',
+            borderRadius: '9999px',
             backgroundColor: isDark ? '#1a1a1a' : '#e5e5ea', 
             color: isDark ? '#fff' : '#000', 
             minWidth: '70px',
+            fontWeight: '700',
+            fontSize: '14px',
+            border: 'none',
+            cursor: 'pointer',
+            display: '-webkit-flex',
             display: 'flex',
-            WebkitAlignItems: 'center',
             alignItems: 'center',
-            WebkitJustifyContent: 'center',
             justifyContent: 'center',
-            marginRight: '8px'
+            gap: '4px',
+            WebkitAppearance: 'none',
+            appearance: 'none'
           }}
         >
           <span>{quickLots}</span>
-          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" style={{ marginLeft: '4px' }}>
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
             <path d="M1 1L5 5L9 1" stroke={isDark ? '#9ca3af' : '#6b7280'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
@@ -276,20 +291,28 @@ const MobileChart = () => {
         <button
           onClick={() => handleTrade('buy')}
           disabled={loading}
-          className="flex-1 py-2.5 rounded-full font-semibold text-white text-sm disabled:opacity-50"
           style={{ 
-            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-            WebkitBackground: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+            flex: 1,
+            padding: '10px 16px',
+            borderRadius: '9999px',
             backgroundColor: '#3b82f6',
+            color: '#ffffff',
+            fontWeight: '600',
+            fontSize: '14px',
+            border: 'none',
+            cursor: 'pointer',
+            display: '-webkit-flex',
             display: 'flex',
-            WebkitAlignItems: 'center',
             alignItems: 'center',
-            WebkitJustifyContent: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            gap: '6px',
+            opacity: loading ? 0.5 : 1,
+            WebkitAppearance: 'none',
+            appearance: 'none'
           }}
         >
           <span>BUY</span>
-          <span className="text-xs opacity-80" style={{ marginLeft: '6px' }}>{formatPrice(price.ask, selectedSymbol)}</span>
+          <span style={{ fontSize: '12px', opacity: 0.8 }}>{formatPrice(price.ask, selectedSymbol)}</span>
         </button>
       </div>
 

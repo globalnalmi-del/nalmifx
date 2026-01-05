@@ -238,23 +238,30 @@ class SocketManager {
    */
   async subscribeDefaultSymbols() {
     const symbols = [
-      // Major Forex pairs
+      // Major Forex pairs (AllTick supported)
       'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF',
       'AUDUSD', 'NZDUSD', 'USDCAD',
-      // Cross pairs
+      // Cross pairs (AllTick supported)
       'EURGBP', 'EURJPY', 'GBPJPY', 'EURCHF',
-      'AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD',
+      'AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDDKK',
       'CADCHF', 'CADJPY', 'CHFJPY',
       'EURAUD', 'EURCAD', 'EURNZD',
       'GBPAUD', 'GBPCAD', 'GBPCHF', 'GBPNZD',
-      'NZDCAD', 'NZDCHF', 'NZDJPY',
-      // Metals
-      'XAUUSD', 'XAGUSD',
-      // Crypto
-      'BTCUSD', 'ETHUSD', 'LTCUSD', 'XRPUSD',
-      'BNBUSD', 'ADAUSD', 'SOLUSD', 'DOGEUSD',
-      // Energy
-      'USOIL', 'UKOIL'
+      'NZDCAD', 'NZDJPY',
+      // Exotic pairs (AllTick supported)
+      'USDCNH', 'USDHKD', 'USDSGD', 'USDTHB', 'USDKRW',
+      // Metals (AllTick supported)
+      'XAUUSD', 'XAUEUR', 'XAUAUD', 'XAUCNH', 'XAUSGD',
+      'XAGEUR', 'XAGSGD',
+      // Crypto (AllTick supported - USDT pairs)
+      'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT',
+      'DOGEUSDT', 'ADAUSDT', 'AVAXUSDT', 'DOTUSDT', 'LINKUSDT',
+      'LTCUSDT', 'MATICUSDT', 'SHIBUSDT', 'TRXUSDT', 'ATOMUSDT',
+      'UNIUSDT', 'NEARUSDT', 'APTUSDT', 'ARBUSDT', 'OPUSDT',
+      'INJUSDT', 'PEPEUSDT', 'SUIUSDT', 'TONUSDT',
+      // US Stocks (AllTick supported)
+      'AAPL.US', 'MSFT.US', 'GOOG.US', 'AMZN.US', 'NVDA.US',
+      'TSLA.US', 'META.US', 'NFLX.US', 'AMD.US'
     ];
 
     console.log(`[SocketManager] Subscribing to ${symbols.length} symbols via AllTick...`);
