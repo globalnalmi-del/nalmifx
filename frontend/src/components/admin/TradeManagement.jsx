@@ -123,7 +123,11 @@ const TradeManagement = () => {
 
   // Socket connection for real-time prices
   useEffect(() => {
-    const socket = io('http://localhost:5001')
+    // Use production URL
+    const socketUrl = window.location.hostname === 'localhost' 
+      ? 'http://localhost:5001' 
+      : 'https://nalmifx.com'
+    const socket = io(socketUrl)
     socketRef.current = socket
 
     socket.on('connect', () => {
@@ -150,6 +154,24 @@ const TradeManagement = () => {
     return () => {
       socket.disconnect()
     }
+  }, [])
+
+  // Fetch prices via API as backup (every 1 second)
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        const res = await axios.get('/api/trades/prices', getAuthHeader())
+        if (res.data.success && res.data.data) {
+          setPrices(res.data.data)
+        }
+      } catch (err) {
+        // Silent fail - socket will provide prices
+      }
+    }
+    
+    fetchPrices()
+    const interval = setInterval(fetchPrices, 1000)
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
