@@ -359,99 +359,13 @@ class SocketManager {
     if (this.config.allTickToken) {
       const connected = await this.initAllTick();
       if (!connected) {
-        console.log('[SocketManager] AllTick failed, starting fallback price simulation');
-        this.startFallbackPrices();
+        console.log('[SocketManager] AllTick connection failed - no prices will be available');
+        console.log('[SocketManager] Please check your ALLTICK_TOKEN in .env');
       }
     } else {
-      console.log('[SocketManager] No ALLTICK_TOKEN - starting fallback price simulation');
-      this.startFallbackPrices();
+      console.log('[SocketManager] WARNING: No ALLTICK_TOKEN configured in .env');
+      console.log('[SocketManager] Real-time prices will not be available');
     }
-  }
-
-  /**
-   * Fallback: Generate simulated prices when AllTick is not available
-   */
-  startFallbackPrices() {
-    // Base prices for simulation
-    const basePrices = {
-      'EURUSD': 1.0850, 'GBPUSD': 1.2650, 'USDJPY': 149.50, 'USDCHF': 0.8750,
-      'AUDUSD': 0.6550, 'NZDUSD': 0.6150, 'USDCAD': 1.3550,
-      'EURGBP': 0.8580, 'EURJPY': 162.20, 'GBPJPY': 189.10, 'EURCHF': 0.9490,
-      'EURAUD': 1.6550, 'EURCAD': 1.4700, 'EURNZD': 1.7650,
-      'GBPAUD': 1.9300, 'GBPCAD': 1.7150, 'GBPCHF': 1.1060, 'GBPNZD': 2.0580,
-      'AUDCAD': 0.8880, 'AUDCHF': 0.5730, 'AUDJPY': 97.90, 'AUDNZD': 1.0650,
-      'CADCHF': 0.6450, 'CADJPY': 110.30, 'CHFJPY': 170.90,
-      'NZDCAD': 0.8340, 'NZDCHF': 0.5380, 'NZDJPY': 91.95,
-      'XAUUSD': 2650.00, 'XAGUSD': 31.50,
-      'BTCUSD': 98500, 'ETHUSD': 3450, 'LTCUSD': 105, 'XRPUSD': 2.35,
-      'BNBUSD': 710, 'ADAUSD': 1.05, 'SOLUSD': 195, 'DOGEUSD': 0.38,
-      'USOIL': 71.50, 'UKOIL': 75.20
-    };
-
-    // Spread in pips for each symbol type
-    const getSpread = (symbol) => {
-      if (symbol.includes('XAU')) return 0.50;
-      if (symbol.includes('XAG')) return 0.05;
-      if (symbol.includes('BTC')) return 50;
-      if (symbol.includes('ETH')) return 5;
-      if (symbol.includes('LTC') || symbol.includes('XRP') || symbol.includes('DOGE')) return 0.01;
-      if (symbol.includes('BNB') || symbol.includes('ADA') || symbol.includes('SOL')) return 1;
-      if (symbol.includes('OIL')) return 0.05;
-      if (symbol.includes('JPY')) return 0.03;
-      return 0.0002; // Forex default
-    };
-
-    // Initialize prices
-    Object.entries(basePrices).forEach(([symbol, basePrice]) => {
-      const spread = getSpread(symbol);
-      this.prices[symbol] = {
-        symbol,
-        bid: basePrice - spread / 2,
-        ask: basePrice + spread / 2,
-        time: Date.now()
-      };
-    });
-
-    // Emit initial prices
-    this.io.emit('prices', this.prices);
-    console.log(`[SocketManager] Fallback: Initialized ${Object.keys(this.prices).length} symbols`);
-
-    // Simulate price movements every 500ms
-    this.fallbackInterval = setInterval(() => {
-      Object.entries(basePrices).forEach(([symbol, basePrice]) => {
-        // Random walk: ±0.02% movement
-        const change = (Math.random() - 0.5) * 0.0004 * basePrice;
-        const newPrice = this.prices[symbol] ? 
-          (this.prices[symbol].bid + this.prices[symbol].ask) / 2 + change : 
-          basePrice + change;
-        
-        const spread = getSpread(symbol);
-        const priceData = {
-          symbol,
-          bid: newPrice - spread / 2,
-          ask: newPrice + spread / 2,
-          time: Date.now()
-        };
-
-        this.prices[symbol] = priceData;
-        
-        // Emit tick
-        this.io.emit('tick', priceData);
-        
-        // Update TradeEngine
-        tradeEngine.updatePrice(symbol, {
-          bid: priceData.bid,
-          ask: priceData.ask,
-          price: newPrice,
-          spread: spread
-        });
-      });
-
-      // Emit all prices periodically
-      this.io.emit('prices', this.prices);
-    }, 500);
-
-    this.io.emit('provider:connected', { source: 'simulation' });
   }
 
   /**
