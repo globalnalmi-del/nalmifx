@@ -16,6 +16,7 @@ import {
   ChevronDown
 } from 'lucide-react'
 import axios from 'axios'
+import socketService from '../services/socketService'
 
 const Orders = () => {
   const [activeTab, setActiveTab] = useState('open')
@@ -27,6 +28,7 @@ const Orders = () => {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
+  const [prices, setPrices] = useState({})
 
   const getAuthHeader = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -38,6 +40,41 @@ const Orders = () => {
     const interval = setInterval(() => fetchData(false), 5000)
     return () => clearInterval(interval)
   }, [activeTab])
+
+  // Fetch live prices for P/L calculation
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        const res = await axios.get('/api/trades/prices', getAuthHeader())
+        if (res.data.success) {
+          setPrices(res.data.data || {})
+        }
+      } catch (err) {
+        console.error('Failed to fetch prices:', err)
+      }
+    }
+    
+    fetchPrices()
+    const priceInterval = setInterval(fetchPrices, 1000) // Update prices every second
+    
+    // Also listen to socket for real-time price updates
+    socketService.connect()
+    const handleTick = (event) => {
+      const tickData = event.detail
+      if (tickData?.symbol) {
+        setPrices(prev => ({
+          ...prev,
+          [tickData.symbol]: { bid: tickData.bid, ask: tickData.ask }
+        }))
+      }
+    }
+    window.addEventListener('tick', handleTick)
+    
+    return () => {
+      clearInterval(priceInterval)
+      window.removeEventListener('tick', handleTick)
+    }
+  }, [])
 
   const fetchData = async (showLoading = false) => {
     try {
@@ -115,6 +152,43 @@ const Orders = () => {
     return account?.accountNumber || 'N/A'
   }
 
+  // Calculate real-time P/L for open trades
+  const calculatePnL = (trade) => {
+    // For closed trades, return stored profit
+    if (trade.status !== 'open') {
+      return trade.profit || 0
+    }
+    
+    // For open trades, calculate from live prices
+    const price = prices[trade.symbol]
+    if (!price) return trade.profit || 0
+    
+    const entryPrice = trade.price || trade.entryPrice || 0
+    const currentPrice = trade.type === 'buy' ? price.bid : price.ask
+    const amount = trade.amount || trade.lots || 0
+    
+    // Calculate pip value based on symbol
+    let pipValue = 10 // Default for standard forex
+    if (trade.symbol?.includes('JPY')) pipValue = 1000 / currentPrice
+    else if (trade.symbol?.includes('XAU')) pipValue = 100
+    else if (trade.symbol?.includes('XAG')) pipValue = 5000
+    else if (trade.symbol?.includes('BTC')) pipValue = 1
+    else if (trade.symbol?.includes('ETH')) pipValue = 1
+    
+    const priceDiff = trade.type === 'buy' 
+      ? currentPrice - entryPrice 
+      : entryPrice - currentPrice
+    
+    // P/L = price difference * lot size * contract size
+    let contractSize = 100000 // Standard forex
+    if (trade.symbol?.includes('XAU')) contractSize = 100
+    else if (trade.symbol?.includes('XAG')) contractSize = 5000
+    else if (trade.symbol?.includes('BTC') || trade.symbol?.includes('ETH')) contractSize = 1
+    
+    const pnl = priceDiff * amount * contractSize
+    return pnl - (trade.tradingCharge || trade.commission || 0)
+  }
+
   const downloadStatement = (format) => {
     const filtered = getFilteredTrades()
     
@@ -151,7 +225,8 @@ const Orders = () => {
   const pendingCount = trades.filter(t => t.status === 'pending').length
   const historyCount = trades.filter(t => t.status === 'closed' || t.status === 'cancelled').length
 
-  const totalPnL = filteredTrades.reduce((sum, t) => sum + (t.profit || 0), 0)
+  // Calculate total P/L using real-time prices for open trades
+  const totalPnL = filteredTrades.reduce((sum, t) => sum + calculatePnL(t), 0)
 
   if (loading) {
     return (
@@ -355,8 +430,8 @@ const Orders = () => {
                       {trade.stopLoss ? `SL: ${trade.stopLoss}` : '-'} / {trade.takeProfit ? `TP: ${trade.takeProfit}` : '-'}
                     </td>
                     <td className="py-4 px-4">
-                      <span className={`text-sm font-bold ${(trade.profit || 0) >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
-                        {(trade.profit || 0) >= 0 ? '+' : ''}${(trade.profit || 0).toFixed(2)}
+                      <span className={`text-sm font-bold ${calculatePnL(trade) >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                        {calculatePnL(trade) >= 0 ? '+' : ''}${calculatePnL(trade).toFixed(2)}
                       </span>
                     </td>
                     <td className="py-4 px-4">
