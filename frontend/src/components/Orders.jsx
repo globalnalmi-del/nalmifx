@@ -69,7 +69,10 @@ const Orders = () => {
 
     // Filter by trading account
     if (selectedAccountId !== 'all') {
-      filtered = filtered.filter(t => t.tradingAccountId === selectedAccountId || t.tradingAccountId?._id === selectedAccountId)
+      filtered = filtered.filter(t => {
+        const accountId = t.tradingAccount?._id || t.tradingAccount || t.tradingAccountId?._id || t.tradingAccountId
+        return accountId === selectedAccountId
+      })
     }
 
     // Filter by tab
@@ -102,8 +105,13 @@ const Orders = () => {
 
   // Helper to get account number from trade
   const getAccountNumber = (trade) => {
+    // Check populated tradingAccount first
+    if (trade.tradingAccount?.accountNumber) return trade.tradingAccount.accountNumber
+    // Then check tradingAccountId (old format)
     if (trade.tradingAccountId?.accountNumber) return trade.tradingAccountId.accountNumber
-    const account = tradingAccounts.find(a => a._id === trade.tradingAccountId)
+    // Try to find in local accounts list
+    const accountId = trade.tradingAccount?._id || trade.tradingAccount || trade.tradingAccountId
+    const account = tradingAccounts.find(a => a._id === accountId)
     return account?.accountNumber || 'N/A'
   }
 
@@ -342,7 +350,7 @@ const Orders = () => {
                       </span>
                     </td>
                     <td className="py-4 px-4 text-sm" style={{ color: 'var(--text-primary)' }}>{(trade.lots || trade.amount)?.toFixed(2)}</td>
-                    <td className="py-4 px-4 text-sm" style={{ color: 'var(--text-primary)' }}>{(trade.entryPrice || trade.price)?.toFixed(5)}</td>
+                    <td className="py-4 px-4 text-sm" style={{ color: 'var(--text-primary)' }}>{trade.price ? trade.price.toFixed(5) : (trade.entryPrice ? trade.entryPrice.toFixed(5) : '-')}</td>
                     <td className="py-4 px-4 text-sm" style={{ color: 'var(--text-muted)' }}>
                       {trade.stopLoss ? `SL: ${trade.stopLoss}` : '-'} / {trade.takeProfit ? `TP: ${trade.takeProfit}` : '-'}
                     </td>
