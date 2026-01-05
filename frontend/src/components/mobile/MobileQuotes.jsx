@@ -592,32 +592,54 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
 
               {/* Buy/Sell Buttons - Slim & Attractive */}
               {orderType === 'market' ? (
-                <div className="flex gap-2">
+                <div style={{ display: 'flex', WebkitFlexDirection: 'row', flexDirection: 'row' }}>
                   <button
                     onClick={() => handleTrade('sell')}
                     disabled={loading}
-                    className="flex-1 py-3 rounded-full font-semibold text-white transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                    style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' }}
+                    className="flex-1 py-3 rounded-full font-semibold text-white disabled:opacity-50"
+                    style={{ 
+                      background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                      WebkitBackground: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                      backgroundColor: '#ef4444',
+                      display: 'flex',
+                      WebkitAlignItems: 'center',
+                      alignItems: 'center',
+                      WebkitJustifyContent: 'center',
+                      justifyContent: 'center',
+                      marginRight: '8px'
+                    }}
                   >
                     <span>SELL</span>
-                    <span className="text-xs opacity-80">{formatPrice(prices[selectedSymbol]?.bid, selectedSymbol)}</span>
+                    <span className="text-xs opacity-80" style={{ marginLeft: '6px' }}>{formatPrice(prices[selectedSymbol]?.bid, selectedSymbol)}</span>
                   </button>
                   <button
                     onClick={() => handleTrade('buy')}
                     disabled={loading}
-                    className="flex-1 py-3 rounded-full font-semibold text-white transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                    style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}
+                    className="flex-1 py-3 rounded-full font-semibold text-white disabled:opacity-50"
+                    style={{ 
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      WebkitBackground: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      backgroundColor: '#3b82f6',
+                      display: 'flex',
+                      WebkitAlignItems: 'center',
+                      alignItems: 'center',
+                      WebkitJustifyContent: 'center',
+                      justifyContent: 'center'
+                    }}
                   >
                     <span>BUY</span>
-                    <span className="text-xs opacity-80">{formatPrice(prices[selectedSymbol]?.ask, selectedSymbol)}</span>
+                    <span className="text-xs opacity-80" style={{ marginLeft: '6px' }}>{formatPrice(prices[selectedSymbol]?.ask, selectedSymbol)}</span>
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={() => handleTrade(pendingOrderType.toLowerCase().includes('buy') ? 'buy' : 'sell')}
                   disabled={loading}
-                  className="w-full py-3 rounded-full font-semibold text-white transition-all active:scale-95 disabled:opacity-50"
-                  style={{ background: pendingOrderType.includes('BUY') ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' }}
+                  className="w-full py-3 rounded-full font-semibold text-white disabled:opacity-50"
+                  style={{ 
+                    background: pendingOrderType.includes('BUY') ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    backgroundColor: pendingOrderType.includes('BUY') ? '#3b82f6' : '#ef4444'
+                  }}
                 >
                   {loading ? 'Placing...' : `Place ${pendingOrderType}`}
                 </button>
