@@ -819,6 +819,118 @@ router.put('/:id/modify', protect, async (req, res) => {
   }
 });
 
+// @route   PUT /api/trades/:id/partial-close
+// @desc    Partial close a trade (close a portion of the position)
+// @access  Private
+router.put('/:id/partial-close', protect, async (req, res) => {
+  try {
+    const { closeAmount } = req.body;
+    
+    if (!closeAmount || closeAmount < 0.01) {
+      return res.status(400).json({
+        success: false,
+        message: 'Close amount must be at least 0.01 lots'
+      });
+    }
+
+    const trade = await Trade.findOne({ _id: req.params.id, user: req.user.id, status: 'open' });
+    if (!trade) {
+      return res.status(404).json({
+        success: false,
+        message: 'Open trade not found'
+      });
+    }
+
+    if (closeAmount >= trade.amount) {
+      // If closing full amount, use regular close
+      const price = tradeEngine.getPrice(trade.symbol);
+      if (!price) {
+        return res.status(400).json({ success: false, message: 'Unable to get current price' });
+      }
+      const closePrice = trade.type === 'buy' ? price.bid : price.ask;
+      const closedTrade = await tradeEngine.closeTrade(trade, closePrice, 'manual');
+      return res.json({
+        success: true,
+        message: 'Trade fully closed',
+        data: closedTrade
+      });
+    }
+
+    // Get current price
+    const price = tradeEngine.getPrice(trade.symbol);
+    if (!price) {
+      return res.status(400).json({ success: false, message: 'Unable to get current price' });
+    }
+    const closePrice = trade.type === 'buy' ? price.bid : price.ask;
+
+    // Calculate P&L for the closed portion
+    const contractSize = tradeEngine.getContractSize(trade.symbol);
+    const priceDiff = trade.type === 'buy' 
+      ? closePrice - trade.price 
+      : trade.price - closePrice;
+    const partialPnL = priceDiff * closeAmount * contractSize;
+
+    // Update the original trade (reduce amount)
+    const remainingAmount = parseFloat((trade.amount - closeAmount).toFixed(2));
+    trade.amount = remainingAmount;
+    await trade.save();
+
+    // Credit P&L to user
+    const user = await User.findById(req.user.id);
+    user.balance += partialPnL;
+    await user.save();
+
+    // Create transaction record for partial close
+    await Transaction.create({
+      user: req.user.id,
+      type: partialPnL >= 0 ? 'trade_profit' : 'trade_loss',
+      amount: partialPnL,
+      status: 'completed',
+      source: 'trade',
+      description: `Partial close ${closeAmount} lots of ${trade.symbol}`,
+      balanceBefore: user.balance - partialPnL,
+      balanceAfter: user.balance,
+      metadata: {
+        tradeId: trade._id,
+        symbol: trade.symbol,
+        closedAmount: closeAmount,
+        remainingAmount,
+        closePrice,
+        pnl: partialPnL
+      }
+    });
+
+    // Notify user
+    if (tradeEngine.io) {
+      tradeEngine.notifyUser(req.user.id, 'partialClose', {
+        trade: trade.toObject(),
+        closedAmount: closeAmount,
+        remainingAmount,
+        pnl: partialPnL,
+        newBalance: user.balance
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Partially closed ${closeAmount} lots. Remaining: ${remainingAmount} lots. P&L: $${partialPnL.toFixed(2)}`,
+      data: {
+        trade: trade.toObject(),
+        closedAmount: closeAmount,
+        remainingAmount,
+        pnl: partialPnL,
+        newBalance: user.balance
+      }
+    });
+  } catch (error) {
+    console.error('Partial close error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to partial close trade'
+    });
+  }
+});
+
 // @route   PUT /api/trades/:id/cancel
 // @desc    Cancel pending order
 // @access  Private

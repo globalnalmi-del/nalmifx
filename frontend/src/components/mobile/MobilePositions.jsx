@@ -42,6 +42,8 @@ const MobilePositions = () => {
   const [modifyingTrade, setModifyingTrade] = useState(null)
   const [modifyForm, setModifyForm] = useState({ stopLoss: '', takeProfit: '' })
   const [expandedTrade, setExpandedTrade] = useState(null)
+  const [partialCloseDialog, setPartialCloseDialog] = useState(null)
+  const [partialClosePercent, setPartialClosePercent] = useState(50)
   const [accountStats, setAccountStats] = useState({
     balance: 0,
     equity: 0,
@@ -279,6 +281,41 @@ const MobilePositions = () => {
     }
   }
 
+  // Partial close trade
+  const partialCloseTrade = async (trade, percent) => {
+    const token = localStorage.getItem('token')
+    const closeAmount = parseFloat((trade.amount * (percent / 100)).toFixed(2))
+    
+    if (closeAmount < 0.01) {
+      alert('Close amount too small (minimum 0.01 lots)')
+      return
+    }
+    
+    setClosingTrade(trade._id)
+    try {
+      const res = await axios.put(`/api/trades/${trade._id}/partial-close`, {
+        closeAmount
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.data.success) {
+        window.dispatchEvent(new Event('tradeClosed'))
+        fetchTrades()
+        fetchAccountStats()
+        setPartialCloseDialog(null)
+      }
+    } catch (err) {
+      // If partial close not supported, fall back to full close
+      if (err.response?.status === 404 || err.response?.data?.message?.includes('not found')) {
+        alert('Partial close not available. Use full close instead.')
+      } else {
+        alert(err.response?.data?.message || 'Failed to partial close trade')
+      }
+    } finally {
+      setClosingTrade(null)
+    }
+  }
+
   const openModifyDialog = (trade) => {
     setModifyForm({
       stopLoss: trade.stopLoss?.toString() || '',
@@ -450,6 +487,16 @@ const MobilePositions = () => {
                           style={{ backgroundColor: isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.1)' }}
                         >
                           <Edit2 size={12} color="#3b82f6" />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setPartialCloseDialog(trade); setPartialClosePercent(50); }} 
+                          className="w-6 h-6 rounded flex items-center justify-center"
+                          style={{ backgroundColor: isDark ? 'rgba(251,191,36,0.2)' : 'rgba(251,191,36,0.1)' }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <line x1="12" y1="3" x2="12" y2="21"/>
+                          </svg>
                         </button>
                         <button 
                           onClick={(e) => { e.stopPropagation(); setShowCloseDialog(trade); }} 
@@ -668,6 +715,108 @@ const MobilePositions = () => {
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Partial Close Position Slider Modal */}
+      {partialCloseDialog && (
+        <div className="fixed inset-0 z-50 flex items-end ios-sheet-backdrop">
+          <div 
+            className="w-full rounded-t-3xl ios-sheet"
+            style={{ 
+              background: 'rgba(28, 28, 30, 0.95)',
+              backdropFilter: 'blur(40px)',
+              WebkitBackdropFilter: 'blur(40px)'
+            }}
+          >
+            {/* Handle bar */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 rounded-full bg-gray-600"></div>
+            </div>
+            
+            <div className="px-5 pb-8">
+              <h3 className="text-xl font-bold text-white text-center mb-2">
+                Partial Close
+              </h3>
+              <p className="text-gray-400 text-center text-sm mb-6">
+                {partialCloseDialog.symbol} • {partialCloseDialog.amount} lots
+              </p>
+              
+              {/* Position Slider */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-gray-400 text-sm">Close Amount</span>
+                  <span className="text-white font-bold text-lg">
+                    {(partialCloseDialog.amount * (partialClosePercent / 100)).toFixed(2)} lots ({partialClosePercent}%)
+                  </span>
+                </div>
+                
+                {/* Slider Track */}
+                <div className="relative h-12 flex items-center">
+                  <input
+                    type="range"
+                    min="10"
+                    max="100"
+                    step="10"
+                    value={partialClosePercent}
+                    onChange={(e) => setPartialClosePercent(parseInt(e.target.value))}
+                    className="w-full h-3 rounded-full appearance-none cursor-pointer"
+                    style={{ 
+                      background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${partialClosePercent}%, rgba(255,255,255,0.1) ${partialClosePercent}%, rgba(255,255,255,0.1) 100%)`,
+                      accentColor: '#ef4444'
+                    }}
+                  />
+                </div>
+                
+                {/* Preset Buttons */}
+                <div className="flex justify-between gap-2 mt-4">
+                  {[25, 50, 75, 100].map(pct => (
+                    <button
+                      key={pct}
+                      onClick={() => setPartialClosePercent(pct)}
+                      className="flex-1 py-3 rounded-xl font-semibold text-sm transition-all"
+                      style={{ 
+                        backgroundColor: partialClosePercent === pct ? '#ef4444' : 'rgba(255,255,255,0.08)',
+                        color: partialClosePercent === pct ? '#fff' : '#9ca3af'
+                      }}
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* P&L Preview */}
+              <div className="p-4 rounded-2xl mb-6" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Estimated P&L to realize</span>
+                  <span className={`font-bold text-lg ${calculatePnL(partialCloseDialog) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {calculatePnL(partialCloseDialog) >= 0 ? '+' : ''}${(calculatePnL(partialCloseDialog) * (partialClosePercent / 100)).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => partialCloseTrade(partialCloseDialog, partialClosePercent)}
+                  disabled={closingTrade === partialCloseDialog._id}
+                  className="w-full py-4 rounded-2xl font-semibold text-white text-lg flex items-center justify-center gap-2"
+                  style={{ backgroundColor: '#ef4444' }}
+                >
+                  {closingTrade === partialCloseDialog._id && <Loader2 size={18} className="animate-spin" />}
+                  Close {partialClosePercent}% ({(partialCloseDialog.amount * (partialClosePercent / 100)).toFixed(2)} lots)
+                </button>
+                <button
+                  onClick={() => setPartialCloseDialog(null)}
+                  className="w-full py-4 rounded-2xl font-semibold text-lg"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: '#0A84FF' }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -4,6 +4,9 @@ import axios from 'axios'
 import TradingChart from '../TradingChart'
 import { useTheme } from '../../context/ThemeContext'
 
+// Lot size presets for quick selection
+const LOT_PRESETS = [0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
+
 const MobileChart = () => {
   const { isDark } = useTheme()
   const [chartTabs, setChartTabs] = useState(() => {
@@ -12,9 +15,13 @@ const MobileChart = () => {
   })
   const [activeTabId, setActiveTabId] = useState(1)
   const [prices, setPrices] = useState({})
-  const [quickLots, setQuickLots] = useState(0.01)
+  const [quickLots, setQuickLots] = useState(() => {
+    const saved = localStorage.getItem('lastLotSize')
+    return saved ? parseFloat(saved) : 0.01
+  })
   const [loading, setLoading] = useState(false)
   const [showSymbolPicker, setShowSymbolPicker] = useState(false)
+  const [showLotPicker, setShowLotPicker] = useState(false)
   const [instruments, setInstruments] = useState([])
 
   const activeTab = chartTabs.find(t => t.id === activeTabId) || chartTabs[0]
@@ -116,6 +123,9 @@ const MobileChart = () => {
       alert('Invalid lot size')
       return
     }
+    
+    // Save last used lot size
+    localStorage.setItem('lastLotSize', quickLots.toString())
 
     setLoading(true)
     try {
@@ -221,15 +231,17 @@ const MobileChart = () => {
           <span className="text-xs opacity-80">{formatPrice(price.bid, selectedSymbol)}</span>
         </button>
         
-        <input
-          type="number"
-          value={quickLots}
-          onChange={(e) => setQuickLots(parseFloat(e.target.value) || 0.01)}
-          step="0.01"
-          min="0.01"
-          className="w-16 px-2 py-2 rounded-full text-center text-xs font-bold"
-          style={{ backgroundColor: isDark ? '#1a1a1a' : '#e5e5ea', color: isDark ? '#fff' : '#000', border: 'none' }}
-        />
+        {/* Enhanced Lot Size Selector */}
+        <button
+          onClick={() => setShowLotPicker(true)}
+          className="px-3 py-2 rounded-full text-center text-sm font-bold flex items-center gap-1"
+          style={{ backgroundColor: isDark ? '#1a1a1a' : '#e5e5ea', color: isDark ? '#fff' : '#000', minWidth: '70px' }}
+        >
+          <span>{quickLots}</span>
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+            <path d="M1 1L5 5L9 1" stroke={isDark ? '#9ca3af' : '#6b7280'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
         
         <button
           onClick={() => handleTrade('buy')}
@@ -241,6 +253,116 @@ const MobileChart = () => {
           <span className="text-xs opacity-80">{formatPrice(price.ask, selectedSymbol)}</span>
         </button>
       </div>
+
+      {/* Lot Size Picker Modal */}
+      {showLotPicker && (
+        <div className="fixed inset-0 z-50 flex items-end" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div 
+            className="w-full rounded-t-2xl overflow-hidden"
+            style={{ backgroundColor: isDark ? '#1c1c1e' : '#fff' }}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 rounded-full" style={{ backgroundColor: isDark ? '#3a3a3c' : '#d1d1d6' }}></div>
+            </div>
+            
+            <div className="px-4 pb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg" style={{ color: isDark ? '#fff' : '#000' }}>Lot Size</h3>
+                <button onClick={() => setShowLotPicker(false)}>
+                  <X size={20} color={isDark ? '#9ca3af' : '#6b7280'} />
+                </button>
+              </div>
+              
+              {/* Quick Presets */}
+              <div className="grid grid-cols-4 gap-2 mb-4">
+                {LOT_PRESETS.map(lot => (
+                  <button
+                    key={lot}
+                    onClick={() => {
+                      setQuickLots(lot)
+                      localStorage.setItem('lastLotSize', lot.toString())
+                    }}
+                    className="py-3 rounded-xl font-semibold text-sm transition-all"
+                    style={{ 
+                      backgroundColor: quickLots === lot ? '#3b82f6' : (isDark ? '#2c2c2e' : '#f2f2f7'),
+                      color: quickLots === lot ? '#fff' : (isDark ? '#fff' : '#000')
+                    }}
+                  >
+                    {lot}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Custom Input with Slider */}
+              <div className="mb-4">
+                <label className="block text-sm mb-2" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>Custom Amount</label>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setQuickLots(Math.max(0.01, parseFloat((quickLots - 0.01).toFixed(2))))}
+                    className="w-12 h-12 rounded-xl font-bold text-xl flex items-center justify-center"
+                    style={{ backgroundColor: isDark ? '#2c2c2e' : '#f2f2f7', color: isDark ? '#fff' : '#000' }}
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    value={quickLots}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0.01
+                      setQuickLots(Math.max(0.01, val))
+                    }}
+                    step="0.01"
+                    min="0.01"
+                    className="flex-1 px-4 py-3 rounded-xl text-center text-lg font-bold"
+                    style={{ backgroundColor: isDark ? '#2c2c2e' : '#f2f2f7', color: isDark ? '#fff' : '#000', border: 'none' }}
+                  />
+                  <button
+                    onClick={() => setQuickLots(parseFloat((quickLots + 0.01).toFixed(2)))}
+                    className="w-12 h-12 rounded-xl font-bold text-xl flex items-center justify-center"
+                    style={{ backgroundColor: isDark ? '#2c2c2e' : '#f2f2f7', color: isDark ? '#fff' : '#000' }}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              
+              {/* Slider for fine control */}
+              <div className="mb-6">
+                <input
+                  type="range"
+                  min="0.01"
+                  max="10"
+                  step="0.01"
+                  value={quickLots}
+                  onChange={(e) => setQuickLots(parseFloat(e.target.value))}
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                  style={{ 
+                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(quickLots / 10) * 100}%, ${isDark ? '#3a3a3c' : '#d1d1d6'} ${(quickLots / 10) * 100}%, ${isDark ? '#3a3a3c' : '#d1d1d6'} 100%)`,
+                    accentColor: '#3b82f6'
+                  }}
+                />
+                <div className="flex justify-between text-xs mt-1" style={{ color: isDark ? '#6b7280' : '#8e8e93' }}>
+                  <span>0.01</span>
+                  <span>10.00</span>
+                </div>
+              </div>
+              
+              {/* Confirm Button */}
+              <button
+                onClick={() => {
+                  localStorage.setItem('lastLotSize', quickLots.toString())
+                  setShowLotPicker(false)
+                }}
+                className="w-full py-4 rounded-2xl font-semibold text-white text-lg"
+                style={{ backgroundColor: '#3b82f6' }}
+              >
+                Confirm ({quickLots} lots)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       
       {/* Symbol Picker Modal - Segmented by Category */}
