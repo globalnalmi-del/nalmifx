@@ -126,6 +126,41 @@ class EmailService {
     return await this.sendTemplateEmail(user.email, templateSlug, data);
   }
 
+  // Send password reset OTP
+  async sendPasswordResetOTP(user, otp) {
+    const data = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      fullName: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      otp,
+      siteName: 'NalmiFx',
+      supportEmail: process.env.SMTP_USER || 'support@NalmiFx.com'
+    };
+
+    // Try template first, fallback to direct email
+    try {
+      return await this.sendTemplateEmail(user.email, 'password_reset', data);
+    } catch (err) {
+      // Fallback to direct email if template doesn't exist
+      const subject = 'Password Reset OTP - NalmiFx';
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Password Reset Request</h2>
+          <p>Hello ${user.firstName},</p>
+          <p>We received a request to reset your password. Use the OTP below to reset your password:</p>
+          <div style="background: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
+            <h1 style="color: #007bff; letter-spacing: 5px; margin: 0;">${otp}</h1>
+          </div>
+          <p>This OTP is valid for 15 minutes.</p>
+          <p>If you didn't request this, please ignore this email or contact support if you have concerns.</p>
+          <p>Best regards,<br>NalmiFx Team</p>
+        </div>
+      `;
+      return await this.sendEmail(user.email, subject, html);
+    }
+  }
+
   // Send account ban notification
   async sendAccountBanEmail(user, reason = '', isBanned = true) {
     const templateSlug = isBanned ? 'account_banned' : 'account_unbanned';

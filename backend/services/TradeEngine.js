@@ -93,6 +93,40 @@ class TradeEngine {
   }
 
   /**
+   * Notify user about trade events - ensures sync across web/mobile
+   * Uses both room-based and broadcast for reliability
+   */
+  notifyUser(userId, event, data) {
+    if (!this.io) return;
+    
+    const userIdStr = userId.toString();
+    
+    // Method 1: Emit to user's room (for authenticated connections)
+    this.io.to(`user_${userIdStr}`).emit(event, data);
+    
+    // Method 2: Also emit with userId in payload for clients that filter
+    this.io.emit(`user:${event}`, { userId: userIdStr, ...data });
+    
+    // Method 3: Emit trade-specific events for real-time sync
+    if (event === 'orderExecuted' || event === 'tradeClosed' || event === 'pendingOrderActivated') {
+      this.io.to(`user_${userIdStr}`).emit('tradesUpdated', { 
+        userId: userIdStr, 
+        event,
+        trade: data.trade,
+        timestamp: Date.now()
+      });
+    }
+  }
+
+  /**
+   * Broadcast trade update to all connected clients (for admin dashboard)
+   */
+  broadcastTradeUpdate(trade, event = 'tradeUpdate') {
+    if (!this.io) return;
+    this.io.emit(event, { trade, timestamp: Date.now() });
+  }
+
+  /**
    * Get current price for symbol
    */
   getPrice(symbol) {
@@ -746,10 +780,7 @@ class TradeEngine {
     
     // P&L = price difference × lots × contract size (NO leverage)
     // Leverage only affects margin required to open, not P&L
-    let contractSize = 100000; // Standard forex
-    if (trade.symbol.includes('XAU')) contractSize = 100;
-    else if (trade.symbol.includes('XAG')) contractSize = 5000;
-    else if (trade.symbol.includes('BTC') || trade.symbol.includes('ETH')) contractSize = 1;
+    const contractSize = this.getContractSize(trade.symbol);
     
     return priceDiff * trade.amount * contractSize;
   }
@@ -758,12 +789,35 @@ class TradeEngine {
    * Calculate margin required
    */
   calculateMargin(symbol, lotSize, price, leverage) {
-    let contractSize = 100000;
-    if (symbol.includes('XAU')) contractSize = 100;
-    else if (symbol.includes('XAG')) contractSize = 5000;
-    else if (symbol.includes('BTC') || symbol.includes('ETH')) contractSize = 1;
-    
+    const contractSize = this.getContractSize(symbol);
     return (price * contractSize * lotSize) / leverage;
+  }
+
+  /**
+   * Get contract size for a symbol
+   */
+  getContractSize(symbol) {
+    if (symbol.includes('XAU')) return 100;
+    if (symbol.includes('XAG')) return 5000;
+    if (symbol.includes('XPT') || symbol.includes('XPD')) return 100; // Platinum, Palladium
+    if (symbol.includes('BTC') || symbol.includes('ETH') || symbol.includes('LTC') || 
+        symbol.includes('XRP') || symbol.includes('DOGE') || symbol.includes('ADA') || 
+        symbol.includes('SOL') || symbol.includes('LINK') || symbol.includes('MATIC') || 
+        symbol.includes('AVAX') || symbol.includes('UNI') || symbol.includes('ATOM') ||
+        symbol.includes('SHIB') || symbol.includes('TRX') || symbol.includes('NEAR') ||
+        symbol.includes('APT') || symbol.includes('DOT') || symbol.includes('BNB') ||
+        symbol.includes('XLM')) return 1;
+    if (symbol.includes('US30') || symbol.includes('US500') || symbol.includes('NAS') || 
+        symbol.includes('UK100') || symbol.includes('GER') || symbol.includes('JP225') ||
+        symbol.includes('FRA') || symbol.includes('AUS') || symbol.includes('HK50') ||
+        symbol.includes('CHINA')) return 1;
+    if (symbol.includes('OIL')) return 1000;
+    if (symbol.includes('XNG') || symbol.includes('NGAS')) return 10000;
+    // Agriculture commodities
+    if (symbol.includes('COCOA') || symbol.includes('COFFEE') || symbol.includes('COTTON') ||
+        symbol.includes('SUGAR') || symbol.includes('WHEAT') || symbol.includes('CORN') ||
+        symbol.includes('SOYBEAN')) return 1;
+    return 100000; // Standard forex
   }
 
   /**

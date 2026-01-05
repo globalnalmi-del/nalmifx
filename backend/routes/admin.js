@@ -28,7 +28,8 @@ router.get('/dashboard', async (req, res) => {
       tradePnL,
       depositStats,
       withdrawalStats,
-      openTradesCount
+      openTradesCount,
+      recentTrades
     ] = await Promise.all([
       // Total Users
       User.countDocuments(),
@@ -87,7 +88,14 @@ router.get('/dashboard', async (req, res) => {
       ]),
       
       // Open Trades Count
-      Trade.countDocuments({ status: 'open' })
+      Trade.countDocuments({ status: 'open' }),
+      
+      // Recent Trades with User info and P&L
+      Trade.find()
+        .populate('user', 'firstName lastName email')
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean()
     ]);
 
     // Parse trading account stats
@@ -125,6 +133,22 @@ router.get('/dashboard', async (req, res) => {
       console.log('Could not fetch currency settings');
     }
 
+    // Format recent trades with username and P&L
+    const formattedRecentTrades = recentTrades.map(trade => ({
+      _id: trade._id,
+      symbol: trade.symbol,
+      type: trade.type,
+      amount: trade.amount,
+      price: trade.price,
+      closePrice: trade.closePrice,
+      profit: trade.profit || 0,
+      status: trade.status,
+      createdAt: trade.createdAt,
+      closedAt: trade.closedAt,
+      userName: trade.user ? `${trade.user.firstName} ${trade.user.lastName}` : 'Unknown',
+      userEmail: trade.user?.email || 'N/A'
+    }));
+
     const responseData = {
       // User Stats
       totalUsers,
@@ -159,7 +183,10 @@ router.get('/dashboard', async (req, res) => {
       totalLoss: pnl.totalLoss || 0,
       
       // Currency Settings
-      currencySettings
+      currencySettings,
+      
+      // Recent Trades with Username and P&L
+      recentTrades: formattedRecentTrades
     };
 
     console.log('[Admin Dashboard] Stats:', responseData);

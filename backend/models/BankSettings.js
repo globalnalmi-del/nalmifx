@@ -18,6 +18,22 @@ const upiSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true }
 }, { _id: true });
 
+// Schema for crypto wallet (MetaMask, etc.)
+const cryptoWalletSchema = new mongoose.Schema({
+  walletType: { type: String, enum: ['metamask', 'trustwallet', 'coinbase', 'other'], default: 'metamask' },
+  walletName: { type: String, default: 'MetaMask' }, // Display name
+  walletAddress: { type: String, required: true },
+  network: { type: String, enum: ['ethereum', 'bsc', 'polygon', 'arbitrum', 'optimism', 'avalanche', 'other'], default: 'ethereum' },
+  networkName: { type: String, default: 'Ethereum Mainnet' },
+  acceptedTokens: [{ 
+    symbol: { type: String }, // USDT, USDC, ETH, BNB, etc.
+    contractAddress: { type: String, default: '' }, // For ERC20 tokens
+    decimals: { type: Number, default: 18 }
+  }],
+  qrCode: { type: String, default: '' }, // QR code for wallet address
+  isActive: { type: Boolean, default: true }
+}, { _id: true });
+
 const bankSettingsSchema = new mongoose.Schema({
   // Multiple Bank Accounts
   bankAccounts: {
@@ -30,6 +46,18 @@ const bankSettingsSchema = new mongoose.Schema({
     type: [upiSchema],
     default: []
   },
+  
+  // Crypto Wallets (MetaMask, etc.)
+  cryptoWallets: {
+    type: [cryptoWalletSchema],
+    default: []
+  },
+  
+  // Stripe Integration
+  stripeEnabled: { type: Boolean, default: false },
+  stripePublicKey: { type: String, default: '' },
+  stripeSecretKey: { type: String, default: '', select: false }, // Hidden by default
+  stripeWebhookSecret: { type: String, default: '', select: false },
   
   // Legacy single fields (for backward compatibility)
   bankName: { type: String, default: '' },
@@ -79,6 +107,12 @@ bankSettingsSchema.statics.getActiveBankAccounts = async function() {
 bankSettingsSchema.statics.getActiveUPIAccounts = async function() {
   const settings = await this.getSettings();
   return settings.upiAccounts.filter(upi => upi.isActive);
+};
+
+// Get active crypto wallets
+bankSettingsSchema.statics.getActiveCryptoWallets = async function() {
+  const settings = await this.getSettings();
+  return settings.cryptoWallets.filter(wallet => wallet.isActive);
 };
 
 module.exports = mongoose.model('BankSettings', bankSettingsSchema);

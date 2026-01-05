@@ -383,4 +383,122 @@ router.post('/resend-otp', [
   }
 });
 
+// @route   POST /api/auth/forgot-password
+// @desc    Send password reset OTP
+// @access  Public
+router.post('/forgot-password', [
+  body('email').isEmail().withMessage('Please enter a valid email')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      // Don't reveal if user exists or not for security
+      return res.json({
+        success: true,
+        message: 'If an account exists with this email, a password reset OTP has been sent.'
+      });
+    }
+
+    // Generate password reset OTP (reuse the same OTP mechanism)
+    const otp = user.generatePasswordResetOTP();
+    await user.save();
+
+    // Send password reset email
+    try {
+      await emailService.sendPasswordResetOTP(user, otp);
+    } catch (emailErr) {
+      console.error('[Auth] Failed to send password reset OTP:', emailErr);
+    }
+
+    res.json({
+      success: true,
+      message: 'If an account exists with this email, a password reset OTP has been sent.'
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password with OTP
+// @access  Public
+router.post('/reset-password', [
+  body('email').isEmail().withMessage('Please enter a valid email'),
+  body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+  body('newPassword').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { email, otp, newPassword } = req.body;
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email or OTP'
+      });
+    }
+
+    // Verify password reset OTP
+    if (!user.verifyPasswordResetOTP(otp)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP'
+      });
+    }
+
+    // Update password
+    user.password = newPassword;
+    user.passwordResetOTP = '';
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    // Send confirmation email
+    try {
+      await emailService.sendTemplateEmail(user.email, 'password_changed', {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        siteName: 'NalmiFx',
+        supportEmail: process.env.SMTP_USER || 'support@NalmiFx.com'
+      });
+    } catch (emailErr) {
+      console.error('[Auth] Failed to send password changed email:', emailErr);
+    }
+
+    res.json({
+      success: true,
+      message: 'Password reset successfully. You can now login with your new password.'
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
 module.exports = router;

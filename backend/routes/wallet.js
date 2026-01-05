@@ -64,6 +64,10 @@ router.get('/bank-settings', async (req, res) => {
         // Multiple accounts (new)
         bankAccounts: settings.bankAccounts || [],
         upiAccounts: settings.upiAccounts || [],
+        cryptoWallets: settings.cryptoWallets || [],
+        // Stripe
+        stripeEnabled: settings.stripeEnabled || false,
+        stripePublicKey: settings.stripePublicKey || '',
         // Legacy single fields (for backward compatibility)
         bankName: settings.bankName,
         accountNumber: settings.accountNumber,
@@ -153,6 +157,18 @@ router.post('/withdraw', [
 
     const { amount, withdrawalMethod, bankAccountId, withdrawalDetails } = req.body;
 
+    // Check user and KYC status
+    const user = await User.findById(req.user._id);
+    
+    // KYC mandatory for withdrawal
+    if (!user.kycVerified || user.kycStatus !== 'approved') {
+      return res.status(403).json({
+        success: false,
+        message: 'KYC verification is required before making withdrawals. Please complete your KYC verification first.',
+        requiresKYC: true
+      });
+    }
+
     // Check limits
     const settings = await BankSettings.getSettings();
     if (amount < settings.minWithdrawal || amount > settings.maxWithdrawal) {
@@ -163,7 +179,6 @@ router.post('/withdraw', [
     }
 
     // Check user balance
-    const user = await User.findById(req.user._id);
     if (user.balance < amount) {
       return res.status(400).json({
         success: false,

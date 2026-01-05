@@ -54,6 +54,14 @@ const userSchema = new mongoose.Schema({
   emailVerificationExpires: {
     type: Date
   },
+  // Password Reset
+  passwordResetOTP: {
+    type: String,
+    default: ''
+  },
+  passwordResetExpires: {
+    type: Date
+  },
   avatar: {
     type: String,
     default: ''
@@ -151,6 +159,19 @@ userSchema.methods.generateEmailVerificationOTP = function() {
 // Verify email OTP
 userSchema.methods.verifyEmailOTP = function(otp) {
   return this.emailVerificationOTP === otp && this.emailVerificationExpires > Date.now();
+};
+
+// Generate 6-digit OTP for password reset
+userSchema.methods.generatePasswordResetOTP = function() {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+  this.passwordResetOTP = otp;
+  this.passwordResetExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
+  return otp;
+};
+
+// Verify password reset OTP
+userSchema.methods.verifyPasswordResetOTP = function(otp) {
+  return this.passwordResetOTP === otp && this.passwordResetExpires > Date.now();
 };
 
 module.exports = mongoose.model('User', userSchema);

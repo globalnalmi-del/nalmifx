@@ -33,6 +33,12 @@ router.put('/bank-settings', async (req, res) => {
       // Multiple accounts (new)
       bankAccounts,
       upiAccounts,
+      cryptoWallets,
+      // Stripe
+      stripeEnabled,
+      stripePublicKey,
+      stripeSecretKey,
+      stripeWebhookSecret,
       // Legacy single fields
       bankName,
       accountNumber,
@@ -54,6 +60,13 @@ router.put('/bank-settings', async (req, res) => {
     // Multiple accounts (new)
     if (bankAccounts !== undefined) settings.bankAccounts = bankAccounts;
     if (upiAccounts !== undefined) settings.upiAccounts = upiAccounts;
+    if (cryptoWallets !== undefined) settings.cryptoWallets = cryptoWallets;
+    
+    // Stripe settings
+    if (stripeEnabled !== undefined) settings.stripeEnabled = stripeEnabled;
+    if (stripePublicKey !== undefined) settings.stripePublicKey = stripePublicKey;
+    if (stripeSecretKey !== undefined) settings.stripeSecretKey = stripeSecretKey;
+    if (stripeWebhookSecret !== undefined) settings.stripeWebhookSecret = stripeWebhookSecret;
     
     // Legacy single fields
     if (bankName !== undefined) settings.bankName = bankName;
@@ -80,6 +93,204 @@ router.put('/bank-settings', async (req, res) => {
     });
   } catch (error) {
     console.error('Update bank settings error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// =============== CRYPTO WALLET MANAGEMENT ===============
+
+// @route   POST /api/admin/wallet/crypto-wallets
+// @desc    Add a new crypto wallet
+// @access  Admin
+router.post('/crypto-wallets', async (req, res) => {
+  try {
+    const { walletType, walletName, walletAddress, network, networkName, acceptedTokens, qrCode } = req.body;
+    
+    if (!walletAddress) {
+      return res.status(400).json({ success: false, message: 'Wallet address is required' });
+    }
+    
+    let settings = await BankSettings.getSettings();
+    
+    settings.cryptoWallets.push({
+      walletType: walletType || 'metamask',
+      walletName: walletName || 'MetaMask',
+      walletAddress,
+      network: network || 'ethereum',
+      networkName: networkName || 'Ethereum Mainnet',
+      acceptedTokens: acceptedTokens || [{ symbol: 'ETH', contractAddress: '', decimals: 18 }],
+      qrCode: qrCode || '',
+      isActive: true
+    });
+    
+    await settings.save();
+    
+    res.json({
+      success: true,
+      message: 'Crypto wallet added successfully',
+      data: settings.cryptoWallets
+    });
+  } catch (error) {
+    console.error('Add crypto wallet error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// @route   PUT /api/admin/wallet/crypto-wallets/:walletId
+// @desc    Update a crypto wallet
+// @access  Admin
+router.put('/crypto-wallets/:walletId', async (req, res) => {
+  try {
+    const { walletType, walletName, walletAddress, network, networkName, acceptedTokens, qrCode, isActive } = req.body;
+    
+    let settings = await BankSettings.getSettings();
+    const wallet = settings.cryptoWallets.id(req.params.walletId);
+    
+    if (!wallet) {
+      return res.status(404).json({ success: false, message: 'Wallet not found' });
+    }
+    
+    if (walletType !== undefined) wallet.walletType = walletType;
+    if (walletName !== undefined) wallet.walletName = walletName;
+    if (walletAddress !== undefined) wallet.walletAddress = walletAddress;
+    if (network !== undefined) wallet.network = network;
+    if (networkName !== undefined) wallet.networkName = networkName;
+    if (acceptedTokens !== undefined) wallet.acceptedTokens = acceptedTokens;
+    if (qrCode !== undefined) wallet.qrCode = qrCode;
+    if (isActive !== undefined) wallet.isActive = isActive;
+    
+    await settings.save();
+    
+    res.json({
+      success: true,
+      message: 'Crypto wallet updated successfully',
+      data: wallet
+    });
+  } catch (error) {
+    console.error('Update crypto wallet error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// @route   DELETE /api/admin/wallet/crypto-wallets/:walletId
+// @desc    Delete a crypto wallet
+// @access  Admin
+router.delete('/crypto-wallets/:walletId', async (req, res) => {
+  try {
+    let settings = await BankSettings.getSettings();
+    const wallet = settings.cryptoWallets.id(req.params.walletId);
+    
+    if (!wallet) {
+      return res.status(404).json({ success: false, message: 'Wallet not found' });
+    }
+    
+    wallet.deleteOne();
+    await settings.save();
+    
+    res.json({
+      success: true,
+      message: 'Crypto wallet deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete crypto wallet error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// =============== ADMIN MANUAL FUND MANAGEMENT ===============
+
+// @route   POST /api/admin/wallet/add-funds
+// @desc    Admin manually add funds to user account (marked as admin_credit)
+// @access  Admin
+router.post('/add-funds', async (req, res) => {
+  try {
+    const { userId, amount, description } = req.body;
+    
+    if (!userId || !amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'User ID and positive amount required' });
+    }
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    const balanceBefore = user.balance;
+    user.balance += parseFloat(amount);
+    await user.save();
+    
+    // Create transaction with admin source
+    const transaction = await Transaction.create({
+      user: userId,
+      type: 'admin_credit',
+      amount: parseFloat(amount),
+      status: 'completed',
+      source: 'admin',
+      description: description || 'Manual credit by admin',
+      balanceBefore,
+      balanceAfter: user.balance,
+      processedAt: new Date(),
+      processedBy: req.admin._id,
+      adminNote: `Added by admin: ${req.admin.email || req.admin.username}`
+    });
+    
+    res.json({
+      success: true,
+      message: `$${amount} added to user account successfully`,
+      data: { transaction, newBalance: user.balance }
+    });
+  } catch (error) {
+    console.error('Add funds error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// @route   POST /api/admin/wallet/deduct-funds
+// @desc    Admin manually deduct funds from user account (marked as admin_debit)
+// @access  Admin
+router.post('/deduct-funds', async (req, res) => {
+  try {
+    const { userId, amount, description } = req.body;
+    
+    if (!userId || !amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'User ID and positive amount required' });
+    }
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    if (user.balance < amount) {
+      return res.status(400).json({ success: false, message: 'User has insufficient balance' });
+    }
+    
+    const balanceBefore = user.balance;
+    user.balance -= parseFloat(amount);
+    await user.save();
+    
+    // Create transaction with admin source
+    const transaction = await Transaction.create({
+      user: userId,
+      type: 'admin_debit',
+      amount: -parseFloat(amount),
+      status: 'completed',
+      source: 'admin',
+      description: description || 'Manual debit by admin',
+      balanceBefore,
+      balanceAfter: user.balance,
+      processedAt: new Date(),
+      processedBy: req.admin._id,
+      adminNote: `Deducted by admin: ${req.admin.email || req.admin.username}`
+    });
+    
+    res.json({
+      success: true,
+      message: `$${amount} deducted from user account successfully`,
+      data: { transaction, newBalance: user.balance }
+    });
+  } catch (error) {
+    console.error('Deduct funds error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });

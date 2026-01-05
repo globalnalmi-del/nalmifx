@@ -134,13 +134,26 @@ const tradeSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Calculate profit/loss
+// Calculate profit/loss (P&L based on actual position size, NOT leveraged)
+// Leverage only affects margin required, not P&L
 tradeSchema.methods.calculatePL = function(currentPrice) {
-  if (this.type === 'buy') {
-    return (currentPrice - this.price) * this.amount * this.leverage;
-  } else {
-    return (this.price - currentPrice) * this.amount * this.leverage;
-  }
+  const priceDiff = this.type === 'buy' 
+    ? currentPrice - this.price 
+    : this.price - currentPrice;
+  
+  // Get contract size based on symbol
+  let contractSize = 100000; // Standard forex
+  if (this.symbol.includes('XAU')) contractSize = 100;
+  else if (this.symbol.includes('XAG')) contractSize = 5000;
+  else if (this.symbol.includes('BTC') || this.symbol.includes('ETH')) contractSize = 1;
+  else if (this.symbol.includes('LTC') || this.symbol.includes('XRP') || this.symbol.includes('DOGE') || 
+           this.symbol.includes('ADA') || this.symbol.includes('SOL') || this.symbol.includes('LINK') ||
+           this.symbol.includes('MATIC') || this.symbol.includes('AVAX') || this.symbol.includes('UNI')) contractSize = 1;
+  else if (this.symbol.includes('US30') || this.symbol.includes('US500') || this.symbol.includes('NAS') || 
+           this.symbol.includes('UK100') || this.symbol.includes('GER') || this.symbol.includes('JP225')) contractSize = 1;
+  else if (this.symbol.includes('OIL')) contractSize = 1000;
+  
+  return priceDiff * this.amount * contractSize;
 };
 
 // Index for faster queries

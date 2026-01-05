@@ -8,7 +8,7 @@ const transactionSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['deposit', 'withdrawal', 'trade_profit', 'trade_loss', 'fee', 'bonus', 'referral', 'margin_deduction', 'margin_release', 'commission', 'spread_cost', 'swap', 'transfer_in', 'transfer_out'],
+    enum: ['deposit', 'withdrawal', 'trade_profit', 'trade_loss', 'fee', 'bonus', 'referral', 'margin_deduction', 'margin_release', 'margin_reserved', 'commission', 'spread_cost', 'swap', 'transfer_in', 'transfer_out', 'admin_credit', 'admin_debit'],
     required: true
   },
   amount: {
@@ -103,6 +103,13 @@ const transactionSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Admin',
     default: null
+  },
+  
+  // Source tracking for fund management
+  source: {
+    type: String,
+    enum: ['user', 'admin', 'system', 'referral', 'trade'],
+    default: 'user'
   }
 }, {
   timestamps: true
