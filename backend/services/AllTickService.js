@@ -51,17 +51,17 @@ class AllTickService extends EventEmitter {
       'XAUUSD': 'XAUUSD', 'XAUEUR': 'XAUEUR', 'XAUAUD': 'XAUAUD',
       'XAUCNH': 'XAUCNH', 'XAUSGD': 'XAUSGD', 'XAUTHB': 'XAUTHB',
       'XAGEUR': 'XAGEUR', 'XAGSGD': 'XAGSGD',
-      // Crypto (AllTick supported - Popular)
-      'BTCUSDT': 'BTCUSDT', 'ETHUSDT': 'ETHUSDT', 'BNBUSDT': 'BNBUSDT',
-      'SOLUSDT': 'SOLUSDT', 'XRPUSDT': 'XRPUSDT', 'DOGEUSDT': 'DOGEUSDT',
-      'ADAUSDT': 'ADAUSDT', 'AVAXUSDT': 'AVAXUSDT', 'DOTUSDT': 'DOTUSDT',
-      'LINKUSDT': 'LINKUSDT', 'LTCUSDT': 'LTCUSDT', 'MATICUSDT': 'MATICUSDT',
-      'SHIBUSDT': 'SHIBUSDT', 'TRXUSDT': 'TRXUSDT', 'ATOMUSDT': 'ATOMUSDT',
-      'UNIUSDT': 'UNIUSDT', 'XLMUSDT': 'XLMUSDT', 'NEARUSDT': 'NEARUSDT',
-      'APTUSDT': 'APTUSDT', 'ARBUSDT': 'ARBUSDT', 'OPUSDT': 'OPUSDT',
-      'INJUSDT': 'INJUSDT', 'PEPEUSDT': 'PEPEUSDT', 'SUIUSDT': 'SUIUSDT',
-      'TONUSDT': 'TONUSDT', 'RENDERUSDT': 'RENDERUSDT', 'FETUSDT': 'FETUSDT',
-      'WIFUSDT': 'WIFUSDT', 'BONKUSDT': 'BONKUSDT', 'FLOKIUSDT': 'FLOKIUSDT'
+      // Crypto (AllTick supported - Popular) - Format: Binance.SYMBOL
+      'BTCUSDT': 'Binance.BTCUSDT', 'ETHUSDT': 'Binance.ETHUSDT', 'BNBUSDT': 'Binance.BNBUSDT',
+      'SOLUSDT': 'Binance.SOLUSDT', 'XRPUSDT': 'Binance.XRPUSDT', 'DOGEUSDT': 'Binance.DOGEUSDT',
+      'ADAUSDT': 'Binance.ADAUSDT', 'AVAXUSDT': 'Binance.AVAXUSDT', 'DOTUSDT': 'Binance.DOTUSDT',
+      'LINKUSDT': 'Binance.LINKUSDT', 'LTCUSDT': 'Binance.LTCUSDT', 'MATICUSDT': 'Binance.MATICUSDT',
+      'SHIBUSDT': 'Binance.SHIBUSDT', 'TRXUSDT': 'Binance.TRXUSDT', 'ATOMUSDT': 'Binance.ATOMUSDT',
+      'UNIUSDT': 'Binance.UNIUSDT', 'XLMUSDT': 'Binance.XLMUSDT', 'NEARUSDT': 'Binance.NEARUSDT',
+      'APTUSDT': 'Binance.APTUSDT', 'ARBUSDT': 'Binance.ARBUSDT', 'OPUSDT': 'Binance.OPUSDT',
+      'INJUSDT': 'Binance.INJUSDT', 'PEPEUSDT': 'Binance.PEPEUSDT', 'SUIUSDT': 'Binance.SUIUSDT',
+      'TONUSDT': 'Binance.TONUSDT', 'RENDERUSDT': 'Binance.RENDERUSDT', 'FETUSDT': 'Binance.FETUSDT',
+      'WIFUSDT': 'Binance.WIFUSDT', 'BONKUSDT': 'Binance.BONKUSDT', 'FLOKIUSDT': 'Binance.FLOKIUSDT'
     };
     
     // Reverse mapping for incoming data
