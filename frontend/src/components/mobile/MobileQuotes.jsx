@@ -593,7 +593,6 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
               {/* Buy/Sell Buttons - Slim & Attractive */}
               {orderType === 'market' ? (
                 <div style={{ 
-                  display: '-webkit-flex', 
                   display: 'flex', 
                   flexDirection: 'row',
                   gap: '8px'
@@ -611,7 +610,6 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
                       fontSize: '14px',
                       border: 'none',
                       cursor: 'pointer',
-                      display: '-webkit-flex',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -637,7 +635,6 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
                       fontSize: '14px',
                       border: 'none',
                       cursor: 'pointer',
-                      display: '-webkit-flex',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

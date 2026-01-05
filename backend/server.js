@@ -142,7 +142,7 @@ server.listen(PORT, () => {
   `);
   
   // Start Socket.IO
-  socketManager.start();
+  socketManager.initialize();
   
   // Start Trade Engine
   tradeEngine.setSocketIO(socketManager.io);
