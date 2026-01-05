@@ -50,7 +50,18 @@ class AllTickService extends EventEmitter {
       // Metals (AllTick supported)
       'XAUUSD': 'XAUUSD', 'XAUEUR': 'XAUEUR', 'XAUAUD': 'XAUAUD',
       'XAUCNH': 'XAUCNH', 'XAUSGD': 'XAUSGD', 'XAUTHB': 'XAUTHB',
-      'XAGEUR': 'XAGEUR', 'XAGSGD': 'XAGSGD'
+      'XAGEUR': 'XAGEUR', 'XAGSGD': 'XAGSGD',
+      // Crypto (AllTick supported - Popular)
+      'BTCUSDT': 'BTCUSDT', 'ETHUSDT': 'ETHUSDT', 'BNBUSDT': 'BNBUSDT',
+      'SOLUSDT': 'SOLUSDT', 'XRPUSDT': 'XRPUSDT', 'DOGEUSDT': 'DOGEUSDT',
+      'ADAUSDT': 'ADAUSDT', 'AVAXUSDT': 'AVAXUSDT', 'DOTUSDT': 'DOTUSDT',
+      'LINKUSDT': 'LINKUSDT', 'LTCUSDT': 'LTCUSDT', 'MATICUSDT': 'MATICUSDT',
+      'SHIBUSDT': 'SHIBUSDT', 'TRXUSDT': 'TRXUSDT', 'ATOMUSDT': 'ATOMUSDT',
+      'UNIUSDT': 'UNIUSDT', 'XLMUSDT': 'XLMUSDT', 'NEARUSDT': 'NEARUSDT',
+      'APTUSDT': 'APTUSDT', 'ARBUSDT': 'ARBUSDT', 'OPUSDT': 'OPUSDT',
+      'INJUSDT': 'INJUSDT', 'PEPEUSDT': 'PEPEUSDT', 'SUIUSDT': 'SUIUSDT',
+      'TONUSDT': 'TONUSDT', 'RENDERUSDT': 'RENDERUSDT', 'FETUSDT': 'FETUSDT',
+      'WIFUSDT': 'WIFUSDT', 'BONKUSDT': 'BONKUSDT', 'FLOKIUSDT': 'FLOKIUSDT'
     };
     
     // Reverse mapping for incoming data

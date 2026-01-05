@@ -46,6 +46,31 @@ const instruments = [
   { symbol: 'XAUSGD', category: 'metals' },
   { symbol: 'XAGEUR', category: 'metals' },
   { symbol: 'XAGSGD', category: 'metals' },
+  // Crypto (AllTick supported - Popular)
+  { symbol: 'BTCUSDT', category: 'crypto' },
+  { symbol: 'ETHUSDT', category: 'crypto' },
+  { symbol: 'BNBUSDT', category: 'crypto' },
+  { symbol: 'SOLUSDT', category: 'crypto' },
+  { symbol: 'XRPUSDT', category: 'crypto' },
+  { symbol: 'DOGEUSDT', category: 'crypto' },
+  { symbol: 'ADAUSDT', category: 'crypto' },
+  { symbol: 'AVAXUSDT', category: 'crypto' },
+  { symbol: 'DOTUSDT', category: 'crypto' },
+  { symbol: 'LINKUSDT', category: 'crypto' },
+  { symbol: 'LTCUSDT', category: 'crypto' },
+  { symbol: 'MATICUSDT', category: 'crypto' },
+  { symbol: 'SHIBUSDT', category: 'crypto' },
+  { symbol: 'TRXUSDT', category: 'crypto' },
+  { symbol: 'ATOMUSDT', category: 'crypto' },
+  { symbol: 'UNIUSDT', category: 'crypto' },
+  { symbol: 'NEARUSDT', category: 'crypto' },
+  { symbol: 'APTUSDT', category: 'crypto' },
+  { symbol: 'ARBUSDT', category: 'crypto' },
+  { symbol: 'OPUSDT', category: 'crypto' },
+  { symbol: 'INJUSDT', category: 'crypto' },
+  { symbol: 'PEPEUSDT', category: 'crypto' },
+  { symbol: 'SUIUSDT', category: 'crypto' },
+  { symbol: 'TONUSDT', category: 'crypto' },
 ]
 
 const MobileMarkets = ({ onSelect, selectedSymbol }) => {
@@ -71,7 +96,7 @@ const MobileMarkets = ({ onSelect, selectedSymbol }) => {
     return () => clearInterval(interval)
   }, [])
 
-  const filters = ['all', 'forex', 'metals']
+  const filters = ['all', 'forex', 'metals', 'crypto']
 
   const filtered = instruments.filter(inst => {
     const matchSearch = inst.symbol.toLowerCase().includes(search.toLowerCase())

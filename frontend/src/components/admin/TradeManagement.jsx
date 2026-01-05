@@ -86,7 +86,13 @@ const TradeManagement = () => {
     'NZDKRW', 'CHFKRW', 'SGDKRW', 'THBKRW', 'INRKRW',
     // Metals (AllTick supported)
     'XAUUSD', 'XAUEUR', 'XAUAUD', 'XAUCNH', 'XAUSGD', 'XAUTHB',
-    'XAGEUR', 'XAGSGD'
+    'XAGEUR', 'XAGSGD',
+    // Crypto (AllTick supported - Popular)
+    'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT',
+    'ADAUSDT', 'AVAXUSDT', 'DOTUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT',
+    'SHIBUSDT', 'TRXUSDT', 'ATOMUSDT', 'UNIUSDT', 'XLMUSDT', 'NEARUSDT',
+    'APTUSDT', 'ARBUSDT', 'OPUSDT', 'INJUSDT', 'PEPEUSDT', 'SUIUSDT',
+    'TONUSDT', 'RENDERUSDT', 'FETUSDT', 'WIFUSDT', 'BONKUSDT', 'FLOKIUSDT'
   ]
 
   // Fetch trading accounts when user is selected
