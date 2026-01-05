@@ -305,8 +305,10 @@ const PositionsTable = () => {
                     }, { headers: { Authorization: `Bearer ${token}` }})
                     console.log('[QuickTrade] Response:', res.data)
                     if (res.data.success) {
-                      fetchPositions()
+                      await fetchPositions()
                       window.dispatchEvent(new Event('tradeCreated'))
+                    } else {
+                      alert(res.data.message || 'Trade failed')
                     }
                   } catch (err) { 
                     console.error('[QuickTrade] Error:', err.response?.data || err)
@@ -343,8 +345,10 @@ const PositionsTable = () => {
                     }, { headers: { Authorization: `Bearer ${token}` }})
                     console.log('[QuickTrade] Response:', res.data)
                     if (res.data.success) {
-                      fetchPositions()
+                      await fetchPositions()
                       window.dispatchEvent(new Event('tradeCreated'))
+                    } else {
+                      alert(res.data.message || 'Trade failed')
                     }
                   } catch (err) { 
                     console.error('[QuickTrade] Error:', err.response?.data || err)
