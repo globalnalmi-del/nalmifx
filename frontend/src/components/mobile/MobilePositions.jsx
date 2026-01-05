@@ -193,7 +193,7 @@ const MobilePositions = () => {
     const token = localStorage.getItem('token')
     setClosingTrade(tradeId)
     try {
-      const res = await axios.put(`/api/trades/${tradeId}/close`, {}, {
+      const res = await axios.post(`/api/trades/${tradeId}/close`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (res.data.success) {
@@ -213,7 +213,7 @@ const MobilePositions = () => {
     setClosingTrade('all')
     for (const trade of openTrades) {
       try {
-        await axios.put(`/api/trades/${trade._id}/close`, {}, {
+        await axios.post(`/api/trades/${trade._id}/close`, {}, {
           headers: { Authorization: `Bearer ${token}` }
         })
       } catch (err) {}
@@ -230,7 +230,7 @@ const MobilePositions = () => {
     const profitTrades = openTrades.filter(t => calculatePnL(t) > 0)
     for (const trade of profitTrades) {
       try {
-        await axios.put(`/api/trades/${trade._id}/close`, {}, {
+        await axios.post(`/api/trades/${trade._id}/close`, {}, {
           headers: { Authorization: `Bearer ${token}` }
         })
       } catch (err) {}
@@ -247,7 +247,7 @@ const MobilePositions = () => {
     const lossTrades = openTrades.filter(t => calculatePnL(t) < 0)
     for (const trade of lossTrades) {
       try {
-        await axios.put(`/api/trades/${trade._id}/close`, {}, {
+        await axios.post(`/api/trades/${trade._id}/close`, {}, {
           headers: { Authorization: `Bearer ${token}` }
         })
       } catch (err) {}

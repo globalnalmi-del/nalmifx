@@ -471,13 +471,13 @@ function App({ initialView = 'home' }) {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Top Account Bar */}
           <div 
-            className="h-10 flex items-center justify-between px-4 flex-shrink-0"
+            className="min-h-[40px] flex items-center justify-between px-2 md:px-4 flex-shrink-0 flex-wrap gap-2 py-1"
             style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}
           >
-            <div className="flex items-center gap-6">
-              <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{selectedSymbol}</span>
+            <div className="flex items-center gap-2 md:gap-6 flex-shrink-0">
+              <span className="text-sm md:text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{selectedSymbol}</span>
               {activeTradingAccount && (
-                <div className="flex items-center gap-4 text-sm">
+                <div className="hidden lg:flex items-center gap-4 text-sm">
                   <span style={{ color: 'var(--text-muted)' }}>
                     <span style={{ color: activeTradingAccount.isChallenge ? '#f59e0b' : activeTradingAccount.isDemo ? 'var(--text-muted)' : '#22c55e', fontWeight: 600 }}>
                       {activeTradingAccount.isChallenge ? 'Challenge' : activeTradingAccount.accountType?.name || (activeTradingAccount.isDemo ? 'Demo' : 'Live')}
@@ -502,13 +502,13 @@ function App({ initialView = 'home' }) {
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 md:gap-3 flex-shrink-0">
               {/* Bid/Ask Display */}
-              <div className="flex items-center gap-2 text-sm mr-2">
-                <span className="px-2 py-1 rounded font-mono font-semibold" style={{ backgroundColor: '#ef444420', color: '#ef4444' }}>
+              <div className="flex items-center gap-1 md:gap-2 text-xs md:text-sm mr-1 md:mr-2">
+                <span className="px-1.5 md:px-2 py-0.5 md:py-1 rounded font-mono font-semibold" style={{ backgroundColor: '#ef444420', color: '#ef4444' }}>
                   {livePrices.bid.toFixed(getDecimals(selectedSymbol))}
                 </span>
-                <span className="px-2 py-1 rounded font-mono font-semibold" style={{ backgroundColor: '#3b82f620', color: '#3b82f6' }}>
+                <span className="px-1.5 md:px-2 py-0.5 md:py-1 rounded font-mono font-semibold" style={{ backgroundColor: '#3b82f620', color: '#3b82f6' }}>
                   {livePrices.ask.toFixed(getDecimals(selectedSymbol))}
                 </span>
               </div>
@@ -517,7 +517,7 @@ function App({ initialView = 'home' }) {
               <button
                 onClick={() => !tradingLocked && setShowOrderPanel(!showOrderPanel)}
                 disabled={tradingLocked}
-                className="px-4 py-1.5 rounded text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-2 md:px-4 py-1 md:py-1.5 rounded text-xs md:text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ backgroundColor: tradingLocked ? '#4b5563' : '#3b82f6', color: 'white' }}
               >
                 {tradingLocked ? 'Locked' : 'New Order'}

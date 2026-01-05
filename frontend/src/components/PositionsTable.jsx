@@ -432,26 +432,26 @@ const PositionsTable = () => {
                 >
                   {pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <button 
                     onClick={() => {
                       setModifyingTrade(pos)
                       setModifyForm({ stopLoss: pos.stopLoss || '', takeProfit: pos.takeProfit || '' })
                     }}
-                    className="transition-colors hover:opacity-70"
+                    className="p-1 transition-colors hover:opacity-70"
                     style={{ color: 'var(--text-secondary)' }}
                     title="Modify SL/TP"
                   >
                     <Edit2 size={14} />
                   </button>
                   <button 
-                    onClick={() => setShowCloseDialog(pos)}
+                    onClick={() => closeTrade(pos._id)}
                     disabled={closingTrade === pos._id}
-                    className="transition-colors hover:text-red-500"
-                    style={{ color: 'var(--text-secondary)' }}
-                    title="Close Trade"
+                    className="p-1 transition-colors hover:bg-red-500/20 rounded"
+                    style={{ color: '#ef4444' }}
+                    title="Close Trade (Click to close immediately)"
                   >
-                    {closingTrade === pos._id ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
+                    {closingTrade === pos._id ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={16} />}
                   </button>
                 </div>
               </div>
