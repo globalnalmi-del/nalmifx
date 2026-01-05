@@ -73,18 +73,20 @@ const TradeManagement = () => {
   })
 
   const symbols = [
-    // Forex Majors
+    // Forex Majors (AllTick supported)
     'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'NZDUSD',
-    // Forex Minors
+    // Forex Cross (AllTick supported)
     'EURGBP', 'EURJPY', 'GBPJPY', 'AUDJPY', 'EURAUD', 'GBPAUD', 'EURCHF',
-    // Metals
-    'XAUUSD', 'XAGUSD',
-    // Crypto
-    'BTCUSD', 'ETHUSD', 'LTCUSD', 'XRPUSD',
-    // Indices
-    'US30', 'US100', 'US500', 'DE30', 'UK100', 'JP225',
-    // Commodities
-    'USOIL', 'UKOIL', 'NATGAS'
+    'EURCAD', 'EURNZD', 'GBPCAD', 'GBPCHF', 'GBPNZD', 'AUDCAD', 'AUDCHF',
+    'AUDNZD', 'AUDDKK', 'CADCHF', 'CADJPY', 'CHFJPY', 'NZDCAD', 'NZDJPY',
+    // Exotic (AllTick supported)
+    'USDCNH', 'USDHKD', 'USDSGD', 'USDTHB', 'USDVND', 'USDKRW',
+    // KRW pairs (AllTick supported)
+    'EURKRW', 'JPYKRW', 'CNYKRW', 'GBPKRW', 'AUDKRW', 'CADKRW',
+    'NZDKRW', 'CHFKRW', 'SGDKRW', 'THBKRW', 'INRKRW',
+    // Metals (AllTick supported)
+    'XAUUSD', 'XAUEUR', 'XAUAUD', 'XAUCNH', 'XAUSGD', 'XAUTHB',
+    'XAGEUR', 'XAGSGD'
   ]
 
   // Fetch trading accounts when user is selected

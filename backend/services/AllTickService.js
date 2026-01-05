@@ -25,37 +25,32 @@ class AllTickService extends EventEmitter {
     // AllTick WebSocket endpoints
     this.wsUrl = `wss://quote.alltick.co/quote-b-ws-api?token=${token}`;
     
-    // Symbol mapping: Our symbols -> AllTick codes
+    // Symbol mapping: Our symbols -> AllTick codes (AllTick supported only)
     this.symbolMap = {
-      // Major Forex
+      // Major Forex (AllTick supported)
       'EURUSD': 'EURUSD', 'GBPUSD': 'GBPUSD', 'USDJPY': 'USDJPY',
       'USDCHF': 'USDCHF', 'AUDUSD': 'AUDUSD', 'NZDUSD': 'NZDUSD',
       'USDCAD': 'USDCAD',
-      // Cross Pairs
+      // Cross Pairs (AllTick supported)
       'EURGBP': 'EURGBP', 'EURJPY': 'EURJPY', 'GBPJPY': 'GBPJPY',
       'EURCHF': 'EURCHF', 'EURAUD': 'EURAUD', 'EURCAD': 'EURCAD',
       'EURNZD': 'EURNZD', 'GBPAUD': 'GBPAUD', 'GBPCAD': 'GBPCAD',
       'GBPCHF': 'GBPCHF', 'GBPNZD': 'GBPNZD', 'AUDCAD': 'AUDCAD',
       'AUDCHF': 'AUDCHF', 'AUDJPY': 'AUDJPY', 'AUDNZD': 'AUDNZD',
-      'CADCHF': 'CADCHF', 'CADJPY': 'CADJPY', 'CHFJPY': 'CHFJPY',
-      'NZDCAD': 'NZDCAD', 'NZDCHF': 'NZDCHF', 'NZDJPY': 'NZDJPY',
-      // Exotic Pairs
-      'USDSGD': 'USDSGD', 'USDHKD': 'USDHKD', 'USDMXN': 'USDMXN',
-      'USDZAR': 'USDZAR', 'USDTRY': 'USDTRY', 'USDSEK': 'USDSEK',
-      'USDNOK': 'USDNOK', 'EURTRY': 'EURTRY', 'EURPLN': 'EURPLN',
-      // Metals
-      'XAUUSD': 'XAUUSD', 'XAGUSD': 'XAGUSD', 'XAUEUR': 'XAUEUR',
-      'XPTUSD': 'XPTUSD', 'XPDUSD': 'XPDUSD',
-      // Energy
-      'USOIL': 'USOIL', 'UKOIL': 'UKOIL', 'XNGUSD': 'XNGUSD',
-      // Crypto (AllTick format)
-      'BTCUSD': 'BTCUSD', 'ETHUSD': 'ETHUSD', 'LTCUSD': 'LTCUSD',
-      'XRPUSD': 'XRPUSD', 'BNBUSD': 'BNBUSD', 'ADAUSD': 'ADAUSD',
-      'SOLUSD': 'SOLUSD', 'DOTUSD': 'DOTUSD', 'DOGEUSD': 'DOGEUSD',
-      'MATICUSD': 'MATICUSD', 'LINKUSD': 'LINKUSD', 'AVAXUSD': 'AVAXUSD',
-      // Indices (check AllTick availability)
-      'US30': 'US30', 'US500': 'US500', 'NAS100': 'NAS100',
-      'UK100': 'UK100', 'GER40': 'GER40', 'JP225': 'JP225'
+      'AUDDKK': 'AUDDKK', 'CADCHF': 'CADCHF', 'CADJPY': 'CADJPY',
+      'CHFJPY': 'CHFJPY', 'NZDCAD': 'NZDCAD', 'NZDJPY': 'NZDJPY',
+      // Exotic Pairs (AllTick supported)
+      'USDCNH': 'USDCNH', 'USDHKD': 'USDHKD', 'USDSGD': 'USDSGD',
+      'USDTHB': 'USDTHB', 'USDVND': 'USDVND', 'USDKRW': 'USDKRW',
+      // KRW pairs (AllTick supported)
+      'EURKRW': 'EURKRW', 'JPYKRW': 'JPYKRW', 'CNYKRW': 'CNYKRW',
+      'GBPKRW': 'GBPKRW', 'AUDKRW': 'AUDKRW', 'CADKRW': 'CADKRW',
+      'NZDKRW': 'NZDKRW', 'CHFKRW': 'CHFKRW', 'SGDKRW': 'SGDKRW',
+      'THBKRW': 'THBKRW', 'INRKRW': 'INRKRW',
+      // Metals (AllTick supported)
+      'XAUUSD': 'XAUUSD', 'XAUEUR': 'XAUEUR', 'XAUAUD': 'XAUAUD',
+      'XAUCNH': 'XAUCNH', 'XAUSGD': 'XAUSGD', 'XAUTHB': 'XAUTHB',
+      'XAGEUR': 'XAGEUR', 'XAGSGD': 'XAGSGD'
     };
     
     // Reverse mapping for incoming data

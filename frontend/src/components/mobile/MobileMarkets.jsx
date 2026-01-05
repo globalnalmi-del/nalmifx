@@ -3,15 +3,49 @@ import { Search, Star } from 'lucide-react'
 import axios from 'axios'
 
 const instruments = [
+  // Forex Majors (AllTick supported)
   { symbol: 'EURUSD', category: 'forex' },
   { symbol: 'GBPUSD', category: 'forex' },
   { symbol: 'USDJPY', category: 'forex' },
+  { symbol: 'USDCHF', category: 'forex' },
   { symbol: 'AUDUSD', category: 'forex' },
+  { symbol: 'NZDUSD', category: 'forex' },
   { symbol: 'USDCAD', category: 'forex' },
+  // Forex Cross (AllTick supported)
+  { symbol: 'EURGBP', category: 'forex' },
+  { symbol: 'EURJPY', category: 'forex' },
+  { symbol: 'GBPJPY', category: 'forex' },
+  { symbol: 'EURCHF', category: 'forex' },
+  { symbol: 'AUDCAD', category: 'forex' },
+  { symbol: 'AUDCHF', category: 'forex' },
+  { symbol: 'AUDJPY', category: 'forex' },
+  { symbol: 'AUDNZD', category: 'forex' },
+  { symbol: 'CADCHF', category: 'forex' },
+  { symbol: 'CADJPY', category: 'forex' },
+  { symbol: 'CHFJPY', category: 'forex' },
+  { symbol: 'EURAUD', category: 'forex' },
+  { symbol: 'EURCAD', category: 'forex' },
+  { symbol: 'EURNZD', category: 'forex' },
+  { symbol: 'GBPAUD', category: 'forex' },
+  { symbol: 'GBPCAD', category: 'forex' },
+  { symbol: 'GBPCHF', category: 'forex' },
+  { symbol: 'GBPNZD', category: 'forex' },
+  { symbol: 'NZDCAD', category: 'forex' },
+  { symbol: 'NZDJPY', category: 'forex' },
+  // Exotic (AllTick supported)
+  { symbol: 'USDCNH', category: 'forex' },
+  { symbol: 'USDHKD', category: 'forex' },
+  { symbol: 'USDSGD', category: 'forex' },
+  { symbol: 'USDTHB', category: 'forex' },
+  { symbol: 'USDKRW', category: 'forex' },
+  // Metals (AllTick supported)
   { symbol: 'XAUUSD', category: 'metals' },
-  { symbol: 'XAGUSD', category: 'metals' },
-  { symbol: 'BTCUSD', category: 'crypto' },
-  { symbol: 'ETHUSD', category: 'crypto' },
+  { symbol: 'XAUEUR', category: 'metals' },
+  { symbol: 'XAUAUD', category: 'metals' },
+  { symbol: 'XAUCNH', category: 'metals' },
+  { symbol: 'XAUSGD', category: 'metals' },
+  { symbol: 'XAGEUR', category: 'metals' },
+  { symbol: 'XAGSGD', category: 'metals' },
 ]
 
 const MobileMarkets = ({ onSelect, selectedSymbol }) => {
@@ -37,7 +71,7 @@ const MobileMarkets = ({ onSelect, selectedSymbol }) => {
     return () => clearInterval(interval)
   }, [])
 
-  const filters = ['all', 'forex', 'metals', 'crypto']
+  const filters = ['all', 'forex', 'metals']
 
   const filtered = instruments.filter(inst => {
     const matchSearch = inst.symbol.toLowerCase().includes(search.toLowerCase())

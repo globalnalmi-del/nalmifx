@@ -5,7 +5,7 @@ import { useSocket } from '../context/SocketContext'
 import axios from 'axios'
 
 const baseInstruments = [
-  // Major Forex pairs
+  // Major Forex pairs (AllTick supported)
   { symbol: 'EURUSD', favorite: true, category: 'forex', decimals: 5 },
   { symbol: 'GBPUSD', favorite: true, category: 'forex', decimals: 5 },
   { symbol: 'USDJPY', favorite: false, category: 'forex', decimals: 3 },
@@ -13,7 +13,7 @@ const baseInstruments = [
   { symbol: 'AUDUSD', favorite: false, category: 'forex', decimals: 5 },
   { symbol: 'NZDUSD', favorite: false, category: 'forex', decimals: 5 },
   { symbol: 'USDCAD', favorite: false, category: 'forex', decimals: 5 },
-  // Cross pairs
+  // Cross pairs (AllTick supported)
   { symbol: 'EURGBP', favorite: false, category: 'forex', decimals: 5 },
   { symbol: 'EURJPY', favorite: false, category: 'forex', decimals: 3 },
   { symbol: 'GBPJPY', favorite: false, category: 'forex', decimals: 3 },
@@ -22,6 +22,7 @@ const baseInstruments = [
   { symbol: 'AUDCHF', favorite: false, category: 'forex', decimals: 5 },
   { symbol: 'AUDJPY', favorite: false, category: 'forex', decimals: 3 },
   { symbol: 'AUDNZD', favorite: false, category: 'forex', decimals: 5 },
+  { symbol: 'AUDDKK', favorite: false, category: 'forex', decimals: 5 },
   { symbol: 'CADCHF', favorite: false, category: 'forex', decimals: 5 },
   { symbol: 'CADJPY', favorite: false, category: 'forex', decimals: 3 },
   { symbol: 'CHFJPY', favorite: false, category: 'forex', decimals: 3 },
@@ -33,28 +34,35 @@ const baseInstruments = [
   { symbol: 'GBPCHF', favorite: false, category: 'forex', decimals: 5 },
   { symbol: 'GBPNZD', favorite: false, category: 'forex', decimals: 5 },
   { symbol: 'NZDCAD', favorite: false, category: 'forex', decimals: 5 },
-  { symbol: 'NZDCHF', favorite: false, category: 'forex', decimals: 5 },
   { symbol: 'NZDJPY', favorite: false, category: 'forex', decimals: 3 },
-  // Metals
+  // Exotic pairs (AllTick supported)
+  { symbol: 'USDCNH', favorite: false, category: 'forex', decimals: 5 },
+  { symbol: 'USDHKD', favorite: false, category: 'forex', decimals: 5 },
+  { symbol: 'USDSGD', favorite: false, category: 'forex', decimals: 5 },
+  { symbol: 'USDTHB', favorite: false, category: 'forex', decimals: 3 },
+  { symbol: 'USDVND', favorite: false, category: 'forex', decimals: 0 },
+  { symbol: 'USDKRW', favorite: false, category: 'forex', decimals: 2 },
+  // KRW pairs (AllTick supported)
+  { symbol: 'EURKRW', favorite: false, category: 'forex', decimals: 2 },
+  { symbol: 'JPYKRW', favorite: false, category: 'forex', decimals: 4 },
+  { symbol: 'CNYKRW', favorite: false, category: 'forex', decimals: 2 },
+  { symbol: 'GBPKRW', favorite: false, category: 'forex', decimals: 2 },
+  { symbol: 'AUDKRW', favorite: false, category: 'forex', decimals: 2 },
+  { symbol: 'CADKRW', favorite: false, category: 'forex', decimals: 2 },
+  { symbol: 'NZDKRW', favorite: false, category: 'forex', decimals: 2 },
+  { symbol: 'CHFKRW', favorite: false, category: 'forex', decimals: 2 },
+  { symbol: 'SGDKRW', favorite: false, category: 'forex', decimals: 2 },
+  { symbol: 'THBKRW', favorite: false, category: 'forex', decimals: 2 },
+  { symbol: 'INRKRW', favorite: false, category: 'forex', decimals: 2 },
+  // Metals (AllTick supported)
   { symbol: 'XAUUSD', favorite: true, category: 'metals', decimals: 2 },
-  { symbol: 'XAGUSD', favorite: false, category: 'metals', decimals: 3 },
   { symbol: 'XAUEUR', favorite: false, category: 'metals', decimals: 2 },
-  // Indices
-  { symbol: 'US30', favorite: false, category: 'indices', decimals: 1 },
-  { symbol: 'US500', favorite: false, category: 'indices', decimals: 1 },
-  { symbol: 'US100', favorite: false, category: 'indices', decimals: 1 },
-  { symbol: 'DE30', favorite: false, category: 'indices', decimals: 1 },
-  { symbol: 'UK100', favorite: false, category: 'indices', decimals: 1 },
-  { symbol: 'JP225', favorite: false, category: 'indices', decimals: 0 },
-  // Crypto
-  { symbol: 'BTCUSD', favorite: false, category: 'crypto', decimals: 2 },
-  { symbol: 'ETHUSD', favorite: false, category: 'crypto', decimals: 2 },
-  { symbol: 'LTCUSD', favorite: false, category: 'crypto', decimals: 2 },
-  { symbol: 'XRPUSD', favorite: false, category: 'crypto', decimals: 5 },
-  // Energy
-  { symbol: 'USOIL', favorite: false, category: 'commodities', decimals: 2 },
-  { symbol: 'UKOIL', favorite: false, category: 'commodities', decimals: 2 },
-  { symbol: 'XNGUSD', favorite: false, category: 'commodities', decimals: 3 },
+  { symbol: 'XAUAUD', favorite: false, category: 'metals', decimals: 2 },
+  { symbol: 'XAUCNH', favorite: false, category: 'metals', decimals: 2 },
+  { symbol: 'XAUSGD', favorite: false, category: 'metals', decimals: 2 },
+  { symbol: 'XAUTHB', favorite: false, category: 'metals', decimals: 2 },
+  { symbol: 'XAGEUR', favorite: false, category: 'metals', decimals: 3 },
+  { symbol: 'XAGSGD', favorite: false, category: 'metals', decimals: 3 },
 ]
 
 const InstrumentsPanel = ({ onClose, onSelectSymbol, selectedSymbol }) => {
