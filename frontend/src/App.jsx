@@ -589,6 +589,28 @@ function App({ initialView = 'home' }) {
             {/* Main Chart */}
             <div className="flex-1 relative">
               <TradingChart symbol={selectedSymbol} />
+              {/* Live Price Overlay - Shows actual trading prices */}
+              <div 
+                className="absolute top-2 right-2 z-10 flex flex-col gap-1 p-2 rounded-lg backdrop-blur-sm"
+                style={{ backgroundColor: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                <div className="text-[10px] text-gray-400 text-center">Trading Price</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-center">
+                    <div className="text-[9px] text-gray-500">BID</div>
+                    <div className="text-sm font-mono font-bold text-red-400">
+                      {livePrices.bid?.toFixed(getDecimals(selectedSymbol)) || '-.--'}
+                    </div>
+                  </div>
+                  <div className="w-px h-6 bg-gray-600"></div>
+                  <div className="text-center">
+                    <div className="text-[9px] text-gray-500">ASK</div>
+                    <div className="text-sm font-mono font-bold text-blue-400">
+                      {livePrices.ask?.toFixed(getDecimals(selectedSymbol)) || '-.--'}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           
