@@ -434,23 +434,23 @@ const TradeManagement = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="relative">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          <div className="relative flex-1 min-w-[150px] max-w-[300px]">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
             <input
               type="text"
               placeholder="Search trades..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 rounded-xl text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="pl-10 pr-4 py-2 rounded-xl text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
               style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
             />
           </div>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-2 rounded-xl text-sm focus:outline-none"
+            className="px-3 md:px-4 py-2 rounded-xl text-sm focus:outline-none"
             style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
           >
             <option value="all">All Types</option>
@@ -460,13 +460,13 @@ const TradeManagement = () => {
           <select
             value={filterUser}
             onChange={(e) => setFilterUser(e.target.value)}
-            className="px-4 py-2 rounded-xl text-sm focus:outline-none min-w-[200px]"
+            className="px-3 md:px-4 py-2 rounded-xl text-sm focus:outline-none flex-1 min-w-[120px] max-w-[200px]"
             style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
           >
             <option value="all">All Users</option>
             {users.map(user => (
               <option key={user._id} value={user._id}>
-                {user.firstName} {user.lastName} ({user.email?.split('@')[0]})
+                {user.firstName} {user.lastName}
               </option>
             ))}
           </select>
@@ -474,18 +474,18 @@ const TradeManagement = () => {
         <div className="flex items-center gap-2">
           <button 
             onClick={() => fetchData()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl text-sm"
             style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}
           >
             <RefreshCw size={16} />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </button>
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm bg-blue-500 text-white hover:bg-blue-600"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl text-sm bg-blue-500 text-white hover:bg-blue-600"
           >
             <Plus size={16} />
-            Create Trade
+            <span className="hidden sm:inline">Create Trade</span>
           </button>
         </div>
       </div>

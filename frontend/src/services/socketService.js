@@ -57,7 +57,8 @@ class SocketService {
     const tradeEvents = [
       'orderExecuted', 'orderPlaced', 'tradeClosed', 'pendingOrderActivated',
       'orderCancelled', 'stopOut', 'marginCall', 'trade_copied', 'trade_modified',
-      'trade_closed', 'challengeFailed'
+      'trade_closed', 'challengeFailed', 'tradesUpdated', 'balanceUpdate',
+      'partialClose', 'tradeCreated'
     ]
 
     tradeEvents.forEach(event => {
@@ -73,6 +74,15 @@ class SocketService {
         // Notify all registered listeners
         const callbacks = this.listeners.get(event) || []
         callbacks.forEach(cb => cb(data))
+      })
+    })
+    
+    // Also listen for user-specific events (Method 2 from backend)
+    tradeEvents.forEach(event => {
+      this.socket.on(`user:${event}`, (data) => {
+        console.log(`[SocketService] User Event: user:${event}`, data)
+        window.dispatchEvent(new CustomEvent(event, { detail: data }))
+        window.dispatchEvent(new CustomEvent('tradeUpdate', { detail: { event, data } }))
       })
     })
 

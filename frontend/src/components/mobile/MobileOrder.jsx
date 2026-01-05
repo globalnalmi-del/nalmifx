@@ -6,6 +6,7 @@ const MobileOrder = ({ symbol }) => {
   const [orderType, setOrderType] = useState('market')
   const [tradeType, setTradeType] = useState('buy') // buy or sell
   const [volume, setVolume] = useState(0.01)
+  const [volumeInput, setVolumeInput] = useState('0.01') // Text input for proper editing
   const [pendingPrice, setPendingPrice] = useState('')
   const [prices, setPrices] = useState({ bid: 0, ask: 0 })
   const [balance, setBalance] = useState(0)
@@ -113,7 +114,9 @@ const MobileOrder = ({ symbol }) => {
   }
 
   const adjustVolume = (delta) => {
-    setVolume(prev => Math.max(0.01, +(prev + delta).toFixed(2)))
+    const newVol = Math.max(0.01, +(volume + delta).toFixed(2))
+    setVolume(newVol)
+    setVolumeInput(newVol.toString())
   }
 
   const margin = (volume * 100000 * prices.ask / 100).toFixed(2)
@@ -201,12 +204,31 @@ const MobileOrder = ({ symbol }) => {
             <Minus size={16} color="#9ca3af" />
           </button>
           <input
-            type="number"
-            value={volume}
-            onChange={(e) => setVolume(Math.max(0.01, parseFloat(e.target.value) || 0.01))}
+            type="text"
+            inputMode="decimal"
+            value={volumeInput}
+            onChange={(e) => {
+              const value = e.target.value
+              if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                setVolumeInput(value)
+                const numVal = parseFloat(value)
+                if (!isNaN(numVal) && numVal > 0) {
+                  setVolume(numVal)
+                }
+              }
+            }}
+            onBlur={() => {
+              const numVal = parseFloat(volumeInput)
+              if (isNaN(numVal) || numVal < 0.01) {
+                setVolumeInput('0.01')
+                setVolume(0.01)
+              } else {
+                setVolumeInput(numVal.toString())
+                setVolume(numVal)
+              }
+            }}
             className="flex-1 bg-transparent text-center text-sm"
             style={{ color: '#fff' }}
-            step="0.01"
           />
           <button onClick={() => adjustVolume(0.01)} className="p-3">
             <Plus size={16} color="#9ca3af" />

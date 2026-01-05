@@ -19,6 +19,10 @@ const MobileChart = () => {
     const saved = localStorage.getItem('lastLotSize')
     return saved ? parseFloat(saved) : 0.01
   })
+  const [lotInputValue, setLotInputValue] = useState(() => {
+    const saved = localStorage.getItem('lastLotSize')
+    return saved || '0.01'
+  })
   const [loading, setLoading] = useState(false)
   const [showSymbolPicker, setShowSymbolPicker] = useState(false)
   const [showLotPicker, setShowLotPicker] = useState(false)
@@ -212,7 +216,7 @@ const MobileChart = () => {
       </div>
 
       {/* Full Screen Chart */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-h-0" style={{ minHeight: '250px' }}>
         <TradingChart symbol={selectedSymbol} />
       </div>
 
@@ -281,6 +285,7 @@ const MobileChart = () => {
                     key={lot}
                     onClick={() => {
                       setQuickLots(lot)
+                      setLotInputValue(lot.toString())
                       localStorage.setItem('lastLotSize', lot.toString())
                     }}
                     className="py-3 rounded-xl font-semibold text-sm transition-all"
@@ -299,26 +304,51 @@ const MobileChart = () => {
                 <label className="block text-sm mb-2" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>Custom Amount</label>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setQuickLots(Math.max(0.01, parseFloat((quickLots - 0.01).toFixed(2))))}
+                    onClick={() => {
+                      const newVal = Math.max(0.01, parseFloat((quickLots - 0.01).toFixed(2)))
+                      setQuickLots(newVal)
+                      setLotInputValue(newVal.toString())
+                    }}
                     className="w-12 h-12 rounded-xl font-bold text-xl flex items-center justify-center"
                     style={{ backgroundColor: isDark ? '#2c2c2e' : '#f2f2f7', color: isDark ? '#fff' : '#000' }}
                   >
                     −
                   </button>
                   <input
-                    type="number"
-                    value={quickLots}
+                    type="text"
+                    inputMode="decimal"
+                    value={lotInputValue}
                     onChange={(e) => {
-                      const val = parseFloat(e.target.value) || 0.01
-                      setQuickLots(Math.max(0.01, val))
+                      const value = e.target.value
+                      // Allow empty, numbers, and decimal point for editing
+                      if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                        setLotInputValue(value)
+                        const numVal = parseFloat(value)
+                        if (!isNaN(numVal) && numVal > 0) {
+                          setQuickLots(numVal)
+                        }
+                      }
                     }}
-                    step="0.01"
-                    min="0.01"
+                    onBlur={() => {
+                      // On blur, ensure valid value
+                      const numVal = parseFloat(lotInputValue)
+                      if (isNaN(numVal) || numVal < 0.01) {
+                        setLotInputValue('0.01')
+                        setQuickLots(0.01)
+                      } else {
+                        setLotInputValue(numVal.toString())
+                        setQuickLots(numVal)
+                      }
+                    }}
                     className="flex-1 px-4 py-3 rounded-xl text-center text-lg font-bold"
                     style={{ backgroundColor: isDark ? '#2c2c2e' : '#f2f2f7', color: isDark ? '#fff' : '#000', border: 'none' }}
                   />
                   <button
-                    onClick={() => setQuickLots(parseFloat((quickLots + 0.01).toFixed(2)))}
+                    onClick={() => {
+                      const newVal = parseFloat((quickLots + 0.01).toFixed(2))
+                      setQuickLots(newVal)
+                      setLotInputValue(newVal.toString())
+                    }}
                     className="w-12 h-12 rounded-xl font-bold text-xl flex items-center justify-center"
                     style={{ backgroundColor: isDark ? '#2c2c2e' : '#f2f2f7', color: isDark ? '#fff' : '#000' }}
                   >
@@ -335,7 +365,11 @@ const MobileChart = () => {
                   max="10"
                   step="0.01"
                   value={quickLots}
-                  onChange={(e) => setQuickLots(parseFloat(e.target.value))}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value)
+                    setQuickLots(val)
+                    setLotInputValue(val.toFixed(2))
+                  }}
                   className="w-full h-2 rounded-full appearance-none cursor-pointer"
                   style={{ 
                     background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(quickLots / 10) * 100}%, ${isDark ? '#3a3a3c' : '#d1d1d6'} ${(quickLots / 10) * 100}%, ${isDark ? '#3a3a3c' : '#d1d1d6'} 100%)`,

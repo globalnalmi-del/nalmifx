@@ -23,8 +23,11 @@ const FundManagement = () => {
   const [activeTab, setActiveTab] = useState('deposits')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [filterSource, setFilterSource] = useState('all') // all, user, admin
   const [deposits, setDeposits] = useState([])
   const [withdrawals, setWithdrawals] = useState([])
+  const [adminCredits, setAdminCredits] = useState([]) // Admin manual credits
+  const [adminDebits, setAdminDebits] = useState([]) // Admin manual debits
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(null)
   const [selectedTx, setSelectedTx] = useState(null)
@@ -52,12 +55,18 @@ const FundManagement = () => {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [depRes, withRes] = await Promise.all([
+      const [depRes, withRes, txRes] = await Promise.all([
         axios.get('/api/admin/wallet/deposits', getAuthHeader()),
-        axios.get('/api/admin/wallet/withdrawals', getAuthHeader())
+        axios.get('/api/admin/wallet/withdrawals', getAuthHeader()),
+        axios.get('/api/admin/wallet/transactions?types=admin_credit,admin_debit', getAuthHeader()).catch(() => ({ data: { success: false } }))
       ])
       if (depRes.data.success) setDeposits(depRes.data.data || [])
       if (withRes.data.success) setWithdrawals(withRes.data.data || [])
+      if (txRes.data.success) {
+        const txData = txRes.data.data || []
+        setAdminCredits(txData.filter(t => t.type === 'admin_credit'))
+        setAdminDebits(txData.filter(t => t.type === 'admin_debit'))
+      }
       
       // Fetch currency settings
       try {
@@ -130,13 +139,26 @@ const FundManagement = () => {
     }
   }
 
-  const currentData = activeTab === 'deposits' ? deposits : withdrawals
+  // Combine deposits with admin credits for unified view
+  const allDeposits = [
+    ...deposits.map(d => ({ ...d, source: d.source || 'user', displayType: 'User Deposit' })),
+    ...adminCredits.map(c => ({ ...c, source: 'admin', displayType: 'Admin Credit', status: c.status || 'completed' }))
+  ]
+  const allWithdrawals = [
+    ...withdrawals.map(w => ({ ...w, source: w.source || 'user', displayType: 'User Withdrawal' })),
+    ...adminDebits.map(d => ({ ...d, source: 'admin', displayType: 'Admin Debit', status: d.status || 'completed', amount: Math.abs(d.amount) }))
+  ]
+  
+  const currentData = activeTab === 'deposits' ? allDeposits : activeTab === 'withdrawals' ? allWithdrawals : []
   const filteredData = currentData.filter(item => {
-    const userName = item.userId?.firstName || ''
+    const userName = item.userId?.firstName || item.user?.firstName || ''
+    const userEmail = item.userId?.email || item.user?.email || ''
     const matchesSearch = userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (item._id || '').toLowerCase().includes(searchTerm.toLowerCase())
     const matchesFilter = filterStatus === 'all' || (item.status || '').toLowerCase() === filterStatus.toLowerCase()
-    return matchesSearch && matchesFilter
+    const matchesSource = filterSource === 'all' || item.source === filterSource
+    return matchesSearch && matchesFilter && matchesSource
   })
 
   const getStatusStyle = (status) => {
@@ -206,10 +228,10 @@ const FundManagement = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setActiveTab('deposits')}
-          className={`px-6 py-2 rounded-xl text-sm font-medium transition-colors`}
+          className={`px-4 md:px-6 py-2 rounded-xl text-xs md:text-sm font-medium transition-colors`}
           style={{
             backgroundColor: activeTab === 'deposits' ? '#22c55e' : 'var(--bg-card)',
             color: activeTab === 'deposits' ? '#ffffff' : 'var(--text-secondary)',
@@ -220,7 +242,7 @@ const FundManagement = () => {
         </button>
         <button
           onClick={() => setActiveTab('withdrawals')}
-          className={`px-6 py-2 rounded-xl text-sm font-medium transition-colors`}
+          className={`px-4 md:px-6 py-2 rounded-xl text-xs md:text-sm font-medium transition-colors`}
           style={{
             backgroundColor: activeTab === 'withdrawals' ? '#ef4444' : 'var(--bg-card)',
             color: activeTab === 'withdrawals' ? '#ffffff' : 'var(--text-secondary)',
@@ -231,7 +253,7 @@ const FundManagement = () => {
         </button>
         <button
           onClick={() => setActiveTab('settings')}
-          className={`px-6 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2`}
+          className={`px-4 md:px-6 py-2 rounded-xl text-xs md:text-sm font-medium transition-colors flex items-center gap-2`}
           style={{
             backgroundColor: activeTab === 'settings' ? '#3b82f6' : 'var(--bg-card)',
             color: activeTab === 'settings' ? '#ffffff' : 'var(--text-secondary)',
@@ -241,6 +263,23 @@ const FundManagement = () => {
           <Settings size={16} />
           Currency Settings
         </button>
+        
+        {/* Source Filter - Only show for deposits/withdrawals tabs */}
+        {(activeTab === 'deposits' || activeTab === 'withdrawals') && (
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Source:</span>
+            <select
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value)}
+              className="px-3 py-2 rounded-lg text-sm"
+              style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+            >
+              <option value="all">All Sources</option>
+              <option value="user">User Only</option>
+              <option value="admin">Admin Only</option>
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Currency Settings Tab */}

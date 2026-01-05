@@ -21,6 +21,7 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
   // Order form state
   const [orderType, setOrderType] = useState('market') // market or pending
   const [volume, setVolume] = useState(0.01)
+  const [volumeInput, setVolumeInput] = useState('0.01') // Text input for proper editing
   const [selectedLeverage, setSelectedLeverage] = useState(100)
   const [maxLeverage, setMaxLeverage] = useState(1000)
   const [showStopLoss, setShowStopLoss] = useState(false)
@@ -98,6 +99,7 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
   const adjustVolume = (delta) => {
     const newVol = Math.max(0.01, Math.round((volume + delta) * 100) / 100)
     setVolume(newVol)
+    setVolumeInput(newVol.toString())
   }
 
   const pendingOrderTypes = ['BUY LIMIT', 'SELL LIMIT', 'BUY STOP', 'SELL STOP']
@@ -483,11 +485,29 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
                     <Minus size={16} color={isDark ? '#fff' : '#000'} />
                   </button>
                   <input
-                    type="number"
-                    value={volume}
-                    onChange={(e) => setVolume(parseFloat(e.target.value) || 0.01)}
-                    step="0.01"
-                    min="0.01"
+                    type="text"
+                    inputMode="decimal"
+                    value={volumeInput}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                        setVolumeInput(value)
+                        const numVal = parseFloat(value)
+                        if (!isNaN(numVal) && numVal > 0) {
+                          setVolume(numVal)
+                        }
+                      }
+                    }}
+                    onBlur={() => {
+                      const numVal = parseFloat(volumeInput)
+                      if (isNaN(numVal) || numVal < 0.01) {
+                        setVolumeInput('0.01')
+                        setVolume(0.01)
+                      } else {
+                        setVolumeInput(numVal.toString())
+                        setVolume(numVal)
+                      }
+                    }}
                     className="flex-1 px-3 py-2.5 rounded-lg text-center font-bold"
                     style={{ backgroundColor: isDark ? '#1a1a1a' : '#f2f2f7', color: isDark ? '#fff' : '#000', border: `1px solid ${isDark ? '#333' : '#e5e5ea'}` }}
                   />

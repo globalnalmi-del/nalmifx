@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTheme } from '../context/ThemeContext'
 
 const TradingChart = ({ symbol }) => {
   const containerRef = useRef(null)
   const widgetRef = useRef(null)
   const { isDark } = useTheme()
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
 
   // Map symbols to TradingView format
   const getSymbol = (sym) => {
@@ -62,6 +63,32 @@ const TradingChart = ({ symbol }) => {
     }
     return symbolMap[sym] || `FX:${sym}`
   }
+
+  // Handle resize for responsive chart
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        setDimensions({
+          width: containerRef.current.offsetWidth,
+          height: containerRef.current.offsetHeight
+        })
+      }
+    }
+    
+    updateDimensions()
+    window.addEventListener('resize', updateDimensions)
+    
+    // Also observe container size changes
+    const resizeObserver = new ResizeObserver(updateDimensions)
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current)
+    }
+    
+    return () => {
+      window.removeEventListener('resize', updateDimensions)
+      resizeObserver.disconnect()
+    }
+  }, [])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -130,8 +157,12 @@ const TradingChart = ({ symbol }) => {
   return (
     <div 
       ref={containerRef}
-      className="w-full h-full"
-      style={{ backgroundColor: isDark ? '#000000' : '#ffffff' }}
+      className="w-full h-full min-h-[300px] md:min-h-[400px]"
+      style={{ 
+        backgroundColor: isDark ? '#000000' : '#ffffff',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
     />
   )
 }

@@ -295,6 +295,43 @@ router.post('/deduct-funds', async (req, res) => {
   }
 });
 
+// =============== ADMIN TRANSACTIONS (Credits/Debits) ===============
+
+// @route   GET /api/admin/wallet/transactions
+// @desc    Get admin credit/debit transactions
+// @access  Admin
+router.get('/transactions', async (req, res) => {
+  try {
+    const { types, limit = 100, page = 1 } = req.query;
+    
+    // Parse types from comma-separated string
+    const typeList = types ? types.split(',') : ['admin_credit', 'admin_debit'];
+    
+    const query = { type: { $in: typeList } };
+
+    const transactions = await Transaction.find(query)
+      .populate('user', 'firstName lastName email')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit));
+
+    const total = await Transaction.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: transactions,
+      pagination: {
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Get admin transactions error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // =============== DEPOSIT REQUESTS ===============
 
 // @route   GET /api/admin/wallet/deposits

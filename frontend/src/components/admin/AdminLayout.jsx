@@ -28,6 +28,7 @@ import { useTheme } from '../../context/ThemeContext'
 const AdminLayout = ({ children, activeSection, setActiveSection }) => {
   const { isDark, toggleTheme } = useTheme()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -55,13 +56,22 @@ const AdminLayout = ({ children, activeSection, setActiveSection }) => {
   const handleNavigation = (item) => {
     setActiveSection(item.id)
     navigate(item.path)
+    setMobileMenuOpen(false) // Close mobile menu on navigation
   }
 
   return (
     <div className="flex h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+      
       {/* Sidebar */}
       <div 
-        className={`${sidebarCollapsed ? 'w-16' : 'w-64'} flex flex-col transition-all duration-300`}
+        className={`${sidebarCollapsed ? 'w-16' : 'w-64'} flex flex-col transition-all duration-300 fixed lg:relative z-50 h-full ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
         style={{ backgroundColor: 'var(--bg-secondary)', borderRight: '1px solid var(--border-color)' }}
       >
         {/* Logo */}
@@ -142,23 +152,33 @@ const AdminLayout = ({ children, activeSection, setActiveSection }) => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
         <header 
-          className="h-16 flex items-center justify-between px-6"
+          className="h-16 flex items-center justify-between px-4 lg:px-6"
           style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}
         >
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 rounded-lg"
+              style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-secondary)' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 12h18M3 6h18M3 18h18" />
+              </svg>
+            </button>
+            <h1 className="text-lg lg:text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
               {menuItems.find(m => m.id === activeSection)?.label || 'Dashboard'}
             </h1>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Search */}
-            <div className="relative">
+          <div className="flex items-center gap-2 lg:gap-4">
+            {/* Search - Hidden on mobile */}
+            <div className="relative hidden md:block">
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
               <input
                 type="text"
                 placeholder="Search..."
-                className="pl-10 pr-4 py-2 rounded-xl text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="pl-10 pr-4 py-2 rounded-xl text-sm w-48 lg:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
             </div>
@@ -173,11 +193,11 @@ const AdminLayout = ({ children, activeSection, setActiveSection }) => {
             </button>
 
             {/* Admin Profile */}
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+            <div className="flex items-center gap-2 lg:gap-3">
+              <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
                 A
               </div>
-              <div className="hidden md:block">
+              <div className="hidden lg:block">
                 <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Admin</p>
                 <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Super Admin</p>
               </div>
@@ -186,7 +206,7 @@ const AdminLayout = ({ children, activeSection, setActiveSection }) => {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}
         </main>
       </div>

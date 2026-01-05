@@ -43,10 +43,9 @@ const emailService = require('./services/emailService');
 const app = express();
 const server = http.createServer(app);
 
-// Initialize Socket.IO with MetaApi configuration
+// Initialize Socket.IO with AllTick configuration
 const socketManager = new SocketManager(server, {
-  metaApiToken: process.env.METAAPI_TOKEN,
-  metaApiAccountId: process.env.METAAPI_ACCOUNT_ID
+  allTickToken: process.env.ALLTICK_TOKEN
 });
 
 // Connect to MongoDB
@@ -138,7 +137,7 @@ server.listen(PORT, () => {
   ║     Running on port ${PORT}                       ║
   ║     Environment: ${process.env.NODE_ENV || 'development'}              ║
   ║     WebSocket: Enabled (Socket.IO)            ║
-  ║     Data: MetaApi.cloud (Low Latency)         ║
+  ║     Data: AllTick API (Low Latency)           ║
   ╚═══════════════════════════════════════════════╝
   `);
   

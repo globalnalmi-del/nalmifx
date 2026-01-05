@@ -68,31 +68,27 @@ const MobilePositions = () => {
         console.log('[MobilePositions] Socket connected')
       })
       
-      // Instant copy trade updates
-      socket.on('trade_copied', (data) => {
-        console.log('[MobilePositions] Copy trade received:', data)
+      // Unified trade event handler for consistency with web
+      const handleSocketTradeEvent = (eventName) => (data) => {
+        console.log(`[MobilePositions] ${eventName}:`, data)
         fetchTrades()
         fetchAccountStats()
+      }
+      
+      // All trade lifecycle events - same as web for consistency
+      const tradeEvents = [
+        'orderExecuted', 'orderPlaced', 'tradeClosed', 'pendingOrderActivated',
+        'orderCancelled', 'stopOut', 'trade_copied', 'trade_modified',
+        'trade_closed', 'tradesUpdated', 'balanceUpdate', 'partialClose'
+      ]
+      
+      tradeEvents.forEach(event => {
+        socket.on(event, handleSocketTradeEvent(event))
       })
-      socket.on('trade_modified', (data) => {
-        console.log('[MobilePositions] Trade modified:', data)
-        fetchTrades()
-      })
-      socket.on('trade_closed', (data) => {
-        console.log('[MobilePositions] Trade closed:', data)
-        fetchTrades()
-        fetchAccountStats()
-      })
-      socket.on('balanceUpdate', () => {
-        fetchAccountStats()
-      })
-      socket.on('orderPlaced', () => {
-        fetchTrades()
-        fetchAccountStats()
-      })
-      socket.on('tradeClosed', () => {
-        fetchTrades()
-        fetchAccountStats()
+      
+      // Also listen for user-specific events (Method 2 from backend)
+      tradeEvents.forEach(event => {
+        socket.on(`user:${event}`, handleSocketTradeEvent(`user:${event}`))
       })
     }
     

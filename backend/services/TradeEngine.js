@@ -19,6 +19,43 @@ class TradeEngine {
     this.checkInterval = null;
     this.userSockets = new Map();
     this.prices = prices;
+    // Safety: Track pending operations to prevent double execution
+    this.pendingOperations = new Map(); // key: `${userId}_${operation}`, value: timestamp
+    this.operationTimeout = 5000; // 5 seconds timeout for pending operations
+  }
+
+  /**
+   * Check if an operation is already in progress for a user
+   * Returns true if operation can proceed, false if duplicate
+   */
+  canProceedWithOperation(userId, operation, tradeId = null) {
+    const key = tradeId ? `${userId}_${operation}_${tradeId}` : `${userId}_${operation}`;
+    const now = Date.now();
+    const pending = this.pendingOperations.get(key);
+    
+    if (pending && (now - pending) < this.operationTimeout) {
+      console.log(`[TradeEngine] BLOCKED: Duplicate ${operation} for user ${userId} (in progress)`);
+      return false;
+    }
+    
+    this.pendingOperations.set(key, now);
+    return true;
+  }
+
+  /**
+   * Clear pending operation after completion
+   */
+  clearPendingOperation(userId, operation, tradeId = null) {
+    const key = tradeId ? `${userId}_${operation}_${tradeId}` : `${userId}_${operation}`;
+    this.pendingOperations.delete(key);
+  }
+
+  /**
+   * Log failed sync for debugging
+   */
+  logFailedSync(userId, operation, error) {
+    console.error(`[TradeEngine] SYNC FAILED: ${operation} for user ${userId}:`, error.message);
+    // Could also write to a file or database for persistent logging
   }
 
   /**
@@ -177,6 +214,12 @@ class TradeEngine {
   async executeMarketOrder(userId, orderData) {
     const { symbol, type, amount, stopLoss, takeProfit, tradingAccountId, leverage: requestedLeverage } = orderData;
     
+    // Safety: Prevent double execution
+    if (!this.canProceedWithOperation(userId, 'executeMarketOrder')) {
+      throw new Error('Order already being processed. Please wait.');
+    }
+    
+    try {
     // Check if market is open
     const marketStatus = this.checkMarketHours(symbol);
     if (!marketStatus.isOpen) {
@@ -350,6 +393,12 @@ class TradeEngine {
     });
 
     return trade;
+    } catch (error) {
+      this.logFailedSync(userId, 'executeMarketOrder', error);
+      throw error;
+    } finally {
+      this.clearPendingOperation(userId, 'executeMarketOrder');
+    }
   }
 
   /**
@@ -629,6 +678,15 @@ class TradeEngine {
    * Close a trade
    */
   async closeTrade(trade, closePrice, reason = 'manual') {
+    const tradeId = trade._id?.toString();
+    const userId = trade.user?.toString();
+    
+    // Safety: Prevent double close execution
+    if (!this.canProceedWithOperation(userId, 'closeTrade', tradeId)) {
+      console.log(`[TradeEngine] Trade ${tradeId} close already in progress, skipping`);
+      return trade;
+    }
+    
     try {
       // Prevent double closing
       if (trade.status === 'closed') {
@@ -764,7 +822,10 @@ class TradeEngine {
       return trade;
     } catch (err) {
       console.error('[TradeEngine] Error closing trade:', err);
+      this.logFailedSync(userId, 'closeTrade', err);
       return null;
+    } finally {
+      this.clearPendingOperation(userId, 'closeTrade', tradeId);
     }
   }
 
@@ -930,21 +991,7 @@ class TradeEngine {
     return trade;
   }
 
-  /**
-   * Notify user via socket
-   */
-  notifyUser(userId, event, data) {
-    if (this.io) {
-      console.log(`[TradeEngine] Emitting ${event} to user ${userId}`);
-      
-      const socketId = this.userSockets.get(userId.toString());
-      if (socketId) {
-        this.io.to(socketId).emit(event, data);
-      }
-      // Broadcast ONLY to user's room (not to all clients)
-      this.io.to(`user_${userId}`).emit(event, data);
-    }
-  }
+  // Note: notifyUser is defined at the top of the class (line ~99) with improved multi-method emission
 
   /**
    * Get charges for a trade (from database or defaults)
