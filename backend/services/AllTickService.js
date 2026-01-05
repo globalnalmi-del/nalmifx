@@ -1,4 +1,11 @@
 /**
+<<<<<<< HEAD
+ * AllTick Service - Real-time crypto price data from AllTick API
+ * Complete implementation based on official documentation
+ */
+
+const axios = require('axios');
+=======
  * AllTick Service - Real-time market data streaming from AllTick API
  * Replaces MetaApi for forex, crypto, commodities, and indices data
  * 
@@ -7,12 +14,193 @@
  */
 
 const WebSocket = require('ws');
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
 const EventEmitter = require('events');
 
 class AllTickService extends EventEmitter {
   constructor(token) {
     super();
     this.token = token;
+<<<<<<< HEAD
+    this.baseUrl = 'https://quote.alltick.co';
+    this.isConnected = false;
+    this.prices = {};
+    this.subscribedSymbols = new Set();
+    this.pollingInterval = null;
+    this.pollingMs = 3000; // Update every 3 seconds (free tier limit)
+  }
+
+  /**
+   * Initialize AllTick connection
+   */
+  async connect() {
+    try {
+      console.log('[AllTick] Testing connection...');
+      
+      // Test with BTCUSDT
+      const testQuery = {
+        trace: this.generateTrace(),
+        data: {
+          symbol_list: [{ code: 'BTCUSDT' }]
+        }
+      };
+      
+      const response = await axios.get(`${this.baseUrl}/quote-b-api/trade-tick`, {
+        params: {
+          token: this.token,
+          query: JSON.stringify(testQuery)
+        },
+        timeout: 10000
+      });
+      
+      if (response.data.ret === 200) {
+        this.isConnected = true;
+        console.log('[AllTick] ✓ Connected successfully!');
+        this.emit('connected');
+        return true;
+      } else {
+        throw new Error(`API returned: ${response.data.msg}`);
+      }
+    } catch (error) {
+      console.error('[AllTick] ✗ Connection failed:', error.message);
+      this.emit('error', error);
+      return false;
+    }
+  }
+
+  /**
+   * Generate unique trace ID for each request
+   */
+  generateTrace() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  /**
+   * Subscribe to crypto symbols
+   */
+  async subscribeSymbols(symbols) {
+    // Convert to USDT format for AllTick
+    const usdtSymbols = symbols.map(symbol => {
+      if (symbol.includes('USD') && !symbol.includes('USDT')) {
+        return symbol.replace('USD', 'USDT');
+      }
+      return symbol;
+    });
+
+    console.log(`[AllTick] Subscribing to: ${usdtSymbols.join(', ')}`);
+    
+    usdtSymbols.forEach(symbol => {
+      this.subscribedSymbols.add(symbol);
+    });
+
+    // Start polling
+    this.startPolling();
+  }
+
+  /**
+   * Start polling for price updates
+   */
+  startPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
+
+    const poll = async () => {
+      if (!this.isConnected || this.subscribedSymbols.size === 0) return;
+
+      try {
+        const symbolsArray = Array.from(this.subscribedSymbols);
+        
+        // Create query for all symbols
+        const queryData = {
+          trace: this.generateTrace(),
+          data: {
+            symbol_list: symbolsArray.map(symbol => ({ code: symbol }))
+          }
+        };
+        
+        console.log(`[AllTick] Querying ${symbolsArray.length} symbols...`);
+        
+        const response = await axios.get(`${this.baseUrl}/quote-b-api/trade-tick`, {
+          params: {
+            token: this.token,
+            query: JSON.stringify(queryData)
+          },
+          timeout: 10000
+        });
+
+        if (response.data.ret === 200 && response.data.data && response.data.data.tick_list) {
+          response.data.data.tick_list.forEach(tick => {
+            if (tick.code && tick.price) {
+              // Convert back to USD format for consistency
+              const symbolUsd = tick.code.replace('USDT', 'USD');
+              const price = parseFloat(tick.price);
+              
+              // Calculate realistic bid/ask spread
+              const spread = this.calculateSpread(tick.code, price);
+              const bid = price - spread / 2;
+              const ask = price + spread / 2;
+
+              const priceData = {
+                symbol: symbolUsd,
+                bid: bid,
+                ask: ask,
+                price: price,
+                timestamp: parseInt(tick.tick_time) || Date.now()
+              };
+
+              // Store price
+              this.prices[symbolUsd] = priceData;
+
+              // Emit tick event
+              this.emit('tick', {
+                symbol: symbolUsd,
+                bid: bid,
+                ask: ask,
+                timestamp: priceData.timestamp
+              });
+
+              // Log first few prices
+              if (Object.keys(this.prices).length <= 4) {
+                console.log(`[AllTick] ${symbolUsd}: $${bid.toFixed(2)}/$${ask.toFixed(2)}`);
+              }
+            }
+          });
+        } else {
+          console.log('[AllTick] Response:', response.data);
+        }
+      } catch (error) {
+        console.error('[AllTick] Polling error:', error.message);
+      }
+    };
+
+    // Initial poll
+    poll();
+
+    // Set up interval (respecting free tier limits)
+    this.pollingInterval = setInterval(poll, this.pollingMs);
+    console.log(`[AllTick] Started polling every ${this.pollingMs}ms`);
+  }
+
+  /**
+   * Calculate realistic spread based on crypto type
+   */
+  calculateSpread(symbol, price) {
+    // Different spreads for different cryptos (in percentage)
+    if (symbol.includes('BTC')) return price * 0.0001;  // 0.01% spread
+    if (symbol.includes('ETH')) return price * 0.0002; // 0.02% spread
+    if (symbol.includes('LTC')) return price * 0.0003; // 0.03% spread
+    if (symbol.includes('XRP')) return price * 0.0005; // 0.05% spread
+    return price * 0.0005; // Default 0.05% spread
+  }
+
+  /**
+   * Get current price for a symbol
+=======
     this.ws = null;
     this.isConnected = false;
     this.subscribedSymbols = new Set();
@@ -414,16 +602,38 @@ class AllTickService extends EventEmitter {
 
   /**
    * Get current price for symbol
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
    */
   getPrice(symbol) {
     return this.prices[symbol] || null;
   }
 
   /**
+<<<<<<< HEAD
+   * Get all current prices
+   */
+  getAllPrices() {
+    return this.prices;
+  }
+
+  /**
+   * Disconnect from AllTick
+   */
+  disconnect() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+    
+    this.isConnected = false;
+    console.log('[AllTick] Disconnected');
+    this.emit('disconnected');
+=======
    * Get all cached prices
    */
   getAllPrices() {
     return { ...this.prices };
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
   }
 
   /**
@@ -432,6 +642,12 @@ class AllTickService extends EventEmitter {
   getStatus() {
     return {
       connected: this.isConnected,
+<<<<<<< HEAD
+      symbols: Array.from(this.subscribedSymbols),
+      priceCount: Object.keys(this.prices).length
+    };
+  }
+=======
       subscribedSymbols: Array.from(this.subscribedSymbols),
       priceCount: Object.keys(this.prices).length,
       source: 'alltick'
@@ -463,6 +679,7 @@ class AllTickService extends EventEmitter {
       console.error('[AllTick] Disconnect error:', error.message);
     }
   }
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
 }
 
 module.exports = AllTickService;

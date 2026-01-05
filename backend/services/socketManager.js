@@ -1,4 +1,8 @@
 const { Server } = require('socket.io');
+<<<<<<< HEAD
+const MetaApiService = require('./MetaApiService');
+=======
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
 const AllTickService = require('./AllTickService');
 const tradeEngine = require('./TradeEngine');
 const TradingCharge = require('../models/TradingCharge');
@@ -22,6 +26,10 @@ class SocketManager {
     });
 
     this.config = config;
+<<<<<<< HEAD
+    this.metaApi = null;
+=======
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
     this.allTick = null;
     this.clients = new Map();
     this.prices = {};
@@ -119,6 +127,34 @@ class SocketManager {
   }
 
   /**
+<<<<<<< HEAD
+   * Initialize MetaApi connection
+   */
+  async initMetaApi() {
+    if (!this.config.metaApiToken || !this.config.metaApiAccountId) {
+      console.log('[SocketManager] MetaApi not configured - skipping');
+      return false;
+    }
+
+    this.metaApi = new MetaApiService(
+      this.config.metaApiToken,
+      this.config.metaApiAccountId
+    );
+
+    this.setupMetaApiHandlers();
+    
+    const connected = await this.metaApi.connect();
+    if (connected) {
+      await this.subscribeDefaultSymbols();
+    }
+    return connected;
+  }
+
+  /**
+   * Set up MetaApi event handlers
+   */
+  setupMetaApiHandlers() {
+=======
    * Initialize AllTick connection
    */
   async initAllTick() {
@@ -147,11 +183,16 @@ class SocketManager {
    * Set up AllTick event handlers
    */
   setupAllTickHandlers() {
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
     const self = this;
     let tickCount = 0;
     
     // Stream ticks to clients AND feed to TradeEngine for order execution
+<<<<<<< HEAD
+    this.metaApi.on('tick', (tickData) => {
+=======
     this.allTick.on('tick', (tickData) => {
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
       if (tickData && tickData.symbol) {
         // Apply admin-configured spread
         const { bid, ask } = self.applySpread(tickData.symbol, tickData.bid, tickData.ask);
@@ -160,12 +201,18 @@ class SocketManager {
           symbol: tickData.symbol,
           bid: bid,
           ask: ask,
+<<<<<<< HEAD
+          time: tickData.time
+        };
+        
+=======
           time: Date.now()
         };
         
         // Store price
         self.prices[tickData.symbol] = priceWithSpread;
         
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
         // Send to frontend with spread applied
         self.io.emit('tick', priceWithSpread);
         
@@ -178,12 +225,102 @@ class SocketManager {
         });
         
         // Log first few ticks
+<<<<<<< HEAD
+        if (tickCount < 20) {
+          console.log(`[Socket.IO] Tick: ${tickData.symbol} ${bid}/${ask} (spread applied)`);
+=======
         if (tickCount < 10) {
           console.log(`[Socket.IO] Tick: ${tickData.symbol} ${bid.toFixed(5)}/${ask.toFixed(5)} (spread applied)`);
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
           tickCount++;
         }
       }
     });
+<<<<<<< HEAD
+    
+    // Initialize AllTick for crypto prices
+    self.initAllTick();
+
+    this.metaApi.on('connected', () => {
+      console.log('[SocketManager] MetaApi connected - streaming to clients');
+      self.io.emit('provider:connected', { source: 'metaapi' });
+    });
+
+    this.metaApi.on('disconnected', () => {
+      console.log('[SocketManager] MetaApi disconnected');
+      self.io.emit('provider:disconnected', { source: 'metaapi' });
+    });
+
+    this.metaApi.on('error', (error) => {
+      console.error('[SocketManager] MetaApi error:', error.message);
+    });
+  }
+
+  /**
+   * Initialize AllTick service for crypto prices
+   */
+  async initAllTick() {
+    if (!this.config.allTickToken) {
+      console.log('[SocketManager] AllTick not configured - skipping crypto prices');
+      return;
+    }
+
+    try {
+      this.allTick = new AllTickService(this.config.allTickToken);
+      
+      // Set up event handlers
+      this.allTick.on('tick', (tickData) => {
+        if (tickData && tickData.symbol) {
+          // Apply admin-configured spread
+          const { bid, ask } = this.applySpread(tickData.symbol, tickData.bid, tickData.ask);
+          
+          const priceWithSpread = {
+            symbol: tickData.symbol,
+            bid: bid,
+            ask: ask,
+            time: tickData.timestamp
+          };
+          
+          // Send to frontend with spread applied
+          this.io.emit('tick', priceWithSpread);
+          
+          // Feed to TradeEngine for order execution (with spread)
+          tradeEngine.updatePrice(tickData.symbol, {
+            bid: bid,
+            ask: ask,
+            price: (bid + ask) / 2,
+            spread: ask - bid
+          });
+          
+          console.log(`[Socket.IO] AllTick: ${tickData.symbol} $${bid.toFixed(2)}/$${ask.toFixed(2)}`);
+        }
+      });
+
+      this.allTick.on('connected', () => {
+        console.log('[SocketManager] ✓ AllTick connected - streaming crypto prices');
+        this.io.emit('provider:connected', { source: 'alltick' });
+      });
+
+      this.allTick.on('disconnected', () => {
+        console.log('[SocketManager] AllTick disconnected');
+        this.io.emit('provider:disconnected', { source: 'alltick' });
+      });
+
+      this.allTick.on('error', (error) => {
+        console.error('[SocketManager] AllTick error:', error.message);
+      });
+
+      // Connect and subscribe to crypto symbols
+      const connected = await this.allTick.connect();
+      if (connected) {
+        const cryptoSymbols = ['BTCUSD', 'ETHUSD', 'BNBUSD', 'ADAUSD', 'SOLUSD', 'DOGEUSD', 'DOTUSD', 'LINKUSD', 'UNIUSD'];
+        await this.allTick.subscribeSymbols(cryptoSymbols);
+        console.log('[SocketManager] Subscribed to crypto symbols:', cryptoSymbols.join(', '));
+      }
+    } catch (error) {
+      console.error('[SocketManager] AllTick initialization error:', error.message);
+    }
+=======
 
     this.allTick.on('connected', () => {
       console.log('[SocketManager] AllTick connected - streaming to clients');
@@ -203,6 +340,7 @@ class SocketManager {
       console.error('[SocketManager] AllTick max reconnect attempts reached');
       self.io.emit('provider:error', { source: 'alltick', message: 'Connection lost' });
     });
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
   }
 
   /**
@@ -238,6 +376,30 @@ class SocketManager {
    */
   async subscribeDefaultSymbols() {
     const symbols = [
+<<<<<<< HEAD
+      // Major Forex pairs
+      'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF',
+      'AUDUSD', 'NZDUSD', 'USDCAD',
+      // Cross pairs
+      'EURGBP', 'EURJPY', 'GBPJPY', 'EURCHF',
+      'AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD',
+      'CADCHF', 'CADJPY', 'CHFJPY',
+      'EURAUD', 'EURCAD', 'EURNZD',
+      'GBPAUD', 'GBPCAD', 'GBPCHF', 'GBPNZD',
+      'NZDCAD', 'NZDCHF', 'NZDJPY',
+      // Metals
+      'XAUUSD', 'XAGUSD', 'XAUEUR',
+      // Indices (if available)
+      'US30', 'US500', 'US100', 'DE30', 'UK100', 'JP225',
+      // Crypto (if available on broker)
+      'BTCUSD', 'ETHUSD', 'LTCUSD', 'XRPUSD',
+      // Oil & Energy
+      'USOIL', 'UKOIL', 'XNGUSD'
+    ];
+
+    console.log(`[SocketManager] Subscribing to ${symbols.length} symbols...`);
+    await this.metaApi.subscribeSymbols(symbols);
+=======
       // Major Forex pairs (AllTick supported)
       'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF',
       'AUDUSD', 'NZDUSD', 'USDCAD',
@@ -266,6 +428,7 @@ class SocketManager {
 
     console.log(`[SocketManager] Subscribing to ${symbols.length} symbols via AllTick...`);
     await this.allTick.subscribeSymbols(symbols);
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
   }
 
   /**
@@ -312,9 +475,15 @@ class SocketManager {
           symbols.forEach(s => client.subscribedSymbols.add(s));
         }
 
+<<<<<<< HEAD
+        // Subscribe via MetaApi if connected
+        if (this.metaApi && this.metaApi.isConnected) {
+          await this.metaApi.subscribeSymbols(symbols);
+=======
         // Subscribe via AllTick if connected
         if (this.allTick && this.allTick.isConnected) {
           await this.allTick.subscribeSymbols(symbols);
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
         }
 
         socket.emit('subscribed', { symbols });
@@ -363,6 +532,12 @@ class SocketManager {
   async start() {
     console.log('[SocketManager] Starting...');
     
+<<<<<<< HEAD
+    if (this.config.metaApiToken && this.config.metaApiAccountId) {
+      await this.initMetaApi();
+    } else {
+      console.log('[SocketManager] Socket.IO ready (configure MetaApi in .env)');
+=======
     if (this.config.allTickToken) {
       const connected = await this.initAllTick();
       if (!connected) {
@@ -372,6 +547,7 @@ class SocketManager {
     } else {
       console.log('[SocketManager] WARNING: No ALLTICK_TOKEN configured in .env');
       console.log('[SocketManager] Real-time prices will not be available');
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
     }
   }
 
@@ -379,11 +555,16 @@ class SocketManager {
    * Stop and cleanup
    */
   async stop() {
+<<<<<<< HEAD
+    if (this.metaApi) {
+      await this.metaApi.disconnect();
+=======
     if (this.fallbackInterval) {
       clearInterval(this.fallbackInterval);
     }
     if (this.allTick) {
       await this.allTick.disconnect();
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
     }
     this.io.close();
   }
@@ -394,11 +575,19 @@ class SocketManager {
   getStatus() {
     return {
       connected: true,
+<<<<<<< HEAD
+      metaApiConnected: this.metaApi?.isConnected || false,
+      subscribedSymbols: this.metaApi ? Array.from(this.metaApi.subscribedSymbols) : [],
+      priceCount: Object.keys(this.prices).length,
+      clientCount: this.clients.size,
+      source: this.metaApi?.isConnected ? 'metaapi' : 'none'
+=======
       allTickConnected: this.allTick?.isConnected || false,
       subscribedSymbols: this.allTick ? Array.from(this.allTick.subscribedSymbols) : [],
       priceCount: Object.keys(this.prices).length,
       clientCount: this.clients.size,
       source: this.allTick?.isConnected ? 'alltick' : 'none'
+>>>>>>> ce6b80a841c546384646b36fc24d9c64a8b8500d
     };
   }
 
