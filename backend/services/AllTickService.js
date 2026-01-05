@@ -61,7 +61,25 @@ class AllTickService extends EventEmitter {
       'APTUSDT': 'Binance.APTUSDT', 'ARBUSDT': 'Binance.ARBUSDT', 'OPUSDT': 'Binance.OPUSDT',
       'INJUSDT': 'Binance.INJUSDT', 'PEPEUSDT': 'Binance.PEPEUSDT', 'SUIUSDT': 'Binance.SUIUSDT',
       'TONUSDT': 'Binance.TONUSDT', 'RENDERUSDT': 'Binance.RENDERUSDT', 'FETUSDT': 'Binance.FETUSDT',
-      'WIFUSDT': 'Binance.WIFUSDT', 'BONKUSDT': 'Binance.BONKUSDT', 'FLOKIUSDT': 'Binance.FLOKIUSDT'
+      'WIFUSDT': 'Binance.WIFUSDT', 'BONKUSDT': 'Binance.BONKUSDT', 'FLOKIUSDT': 'Binance.FLOKIUSDT',
+      // US Stocks (AllTick supported - Popular)
+      'AAPL.US': 'AAPL.US', 'MSFT.US': 'MSFT.US', 'GOOG.US': 'GOOG.US', 'GOOGL.US': 'GOOGL.US',
+      'AMZN.US': 'AMZN.US', 'NVDA.US': 'NVDA.US', 'TSLA.US': 'TSLA.US', 'META.US': 'META.US',
+      'LLY.US': 'LLY.US', 'UNH.US': 'UNH.US', 'XOM.US': 'XOM.US', 'V.US': 'V.US',
+      'WMT.US': 'WMT.US', 'JPM.US': 'JPM.US', 'JNJ.US': 'JNJ.US', 'MA.US': 'MA.US',
+      'PG.US': 'PG.US', 'AVGO.US': 'AVGO.US', 'CVX.US': 'CVX.US', 'HD.US': 'HD.US',
+      'ORCL.US': 'ORCL.US', 'MRK.US': 'MRK.US', 'ABBV.US': 'ABBV.US', 'KO.US': 'KO.US',
+      'COST.US': 'COST.US', 'PEP.US': 'PEP.US', 'ADBE.US': 'ADBE.US', 'BABA.US': 'BABA.US',
+      'BAC.US': 'BAC.US', 'CSCO.US': 'CSCO.US', 'CRM.US': 'CRM.US', 'ACN.US': 'ACN.US',
+      'MCD.US': 'MCD.US', 'TMO.US': 'TMO.US', 'NFLX.US': 'NFLX.US', 'AMD.US': 'AMD.US',
+      'WFC.US': 'WFC.US', 'DIS.US': 'DIS.US', 'INTC.US': 'INTC.US', 'VZ.US': 'VZ.US',
+      'CAT.US': 'CAT.US', 'NKE.US': 'NKE.US', 'MS.US': 'MS.US', 'IBM.US': 'IBM.US',
+      'UPS.US': 'UPS.US', 'HON.US': 'HON.US', 'LOW.US': 'LOW.US', 'GE.US': 'GE.US',
+      'QCOM.US': 'QCOM.US', 'BA.US': 'BA.US', 'AMAT.US': 'AMAT.US', 'NOW.US': 'NOW.US',
+      'AXP.US': 'AXP.US', 'DE.US': 'DE.US', 'BKNG.US': 'BKNG.US', 'T.US': 'T.US',
+      'GS.US': 'GS.US', 'SBUX.US': 'SBUX.US', 'ISRG.US': 'ISRG.US', 'BLK.US': 'BLK.US',
+      'UBER.US': 'UBER.US', 'ABNB.US': 'ABNB.US', 'C.US': 'C.US', 'AMT.US': 'AMT.US',
+      'MU.US': 'MU.US', 'PYPL.US': 'PYPL.US', 'SQ.US': 'SQ.US', 'COIN.US': 'COIN.US'
     };
     
     // Reverse mapping for incoming data

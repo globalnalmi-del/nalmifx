@@ -71,6 +71,19 @@ const instruments = [
   { symbol: 'PEPEUSDT', category: 'crypto' },
   { symbol: 'SUIUSDT', category: 'crypto' },
   { symbol: 'TONUSDT', category: 'crypto' },
+  // US Stocks (AllTick supported - Popular)
+  { symbol: 'AAPL.US', category: 'stocks' },
+  { symbol: 'MSFT.US', category: 'stocks' },
+  { symbol: 'GOOG.US', category: 'stocks' },
+  { symbol: 'AMZN.US', category: 'stocks' },
+  { symbol: 'NVDA.US', category: 'stocks' },
+  { symbol: 'TSLA.US', category: 'stocks' },
+  { symbol: 'META.US', category: 'stocks' },
+  { symbol: 'NFLX.US', category: 'stocks' },
+  { symbol: 'AMD.US', category: 'stocks' },
+  { symbol: 'DIS.US', category: 'stocks' },
+  { symbol: 'UBER.US', category: 'stocks' },
+  { symbol: 'COIN.US', category: 'stocks' },
 ]
 
 const MobileMarkets = ({ onSelect, selectedSymbol }) => {
@@ -96,7 +109,7 @@ const MobileMarkets = ({ onSelect, selectedSymbol }) => {
     return () => clearInterval(interval)
   }, [])
 
-  const filters = ['all', 'forex', 'metals', 'crypto']
+  const filters = ['all', 'forex', 'metals', 'crypto', 'stocks']
 
   const filtered = instruments.filter(inst => {
     const matchSearch = inst.symbol.toLowerCase().includes(search.toLowerCase())

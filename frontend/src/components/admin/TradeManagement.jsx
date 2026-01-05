@@ -92,7 +92,12 @@ const TradeManagement = () => {
     'ADAUSDT', 'AVAXUSDT', 'DOTUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT',
     'SHIBUSDT', 'TRXUSDT', 'ATOMUSDT', 'UNIUSDT', 'XLMUSDT', 'NEARUSDT',
     'APTUSDT', 'ARBUSDT', 'OPUSDT', 'INJUSDT', 'PEPEUSDT', 'SUIUSDT',
-    'TONUSDT', 'RENDERUSDT', 'FETUSDT', 'WIFUSDT', 'BONKUSDT', 'FLOKIUSDT'
+    'TONUSDT', 'RENDERUSDT', 'FETUSDT', 'WIFUSDT', 'BONKUSDT', 'FLOKIUSDT',
+    // US Stocks (AllTick supported - Popular)
+    'AAPL.US', 'MSFT.US', 'GOOG.US', 'AMZN.US', 'NVDA.US', 'TSLA.US', 'META.US',
+    'JPM.US', 'V.US', 'MA.US', 'HD.US', 'KO.US', 'PEP.US', 'NFLX.US', 'AMD.US',
+    'DIS.US', 'INTC.US', 'NKE.US', 'BA.US', 'SBUX.US', 'UBER.US', 'ABNB.US',
+    'COIN.US', 'PYPL.US', 'SQ.US'
   ]
 
   // Fetch trading accounts when user is selected
