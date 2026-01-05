@@ -445,13 +445,13 @@ const PositionsTable = () => {
                     <Edit2 size={14} />
                   </button>
                   <button 
-                    onClick={() => closeTrade(pos._id)}
+                    onClick={() => setShowCloseDialog(pos)}
                     disabled={closingTrade === pos._id}
                     className="p-1 transition-colors hover:bg-red-500/20 rounded"
                     style={{ color: '#ef4444' }}
-                    title="Close Trade (Click to close immediately)"
+                    title="Close Trade Options"
                   >
-                    {closingTrade === pos._id ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={16} />}
+                    {closingTrade === pos._id ? <Loader2 size={14} className="animate-spin" /> : <X size={16} />}
                   </button>
                 </div>
               </div>

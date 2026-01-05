@@ -34,6 +34,7 @@ const OrderPanel = ({ symbol, orderType, setOrderType, onClose }) => {
     return parseFloat(price.toFixed(getDecimals(symbol))).toString()
   }
   const [volume, setVolume] = useState(0.01)
+  const [volumeInput, setVolumeInput] = useState('0.01')
   const [entryPrice, setEntryPrice] = useState('')
   const [showTakeProfit, setShowTakeProfit] = useState(false)
   const [showStopLoss, setShowStopLoss] = useState(false)
@@ -161,6 +162,7 @@ const OrderPanel = ({ symbol, orderType, setOrderType, onClose }) => {
   const adjustVolume = (delta) => {
     const newVol = Math.max(0.01, Math.round((volume + delta) * 100) / 100)
     setVolume(newVol)
+    setVolumeInput(newVol.toString())
   }
 
   const pendingOrderTypes = ['BUY LIMIT', 'SELL LIMIT', 'BUY STOP', 'SELL STOP']
@@ -346,13 +348,31 @@ const OrderPanel = ({ symbol, orderType, setOrderType, onClose }) => {
                   <Minus size={16} />
                 </button>
                 <input
-                  type="number"
-                  value={volume}
-                  onChange={(e) => setVolume(parseFloat(e.target.value) || 0.01)}
+                  type="text"
+                  inputMode="decimal"
+                  value={volumeInput}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                      setVolumeInput(value)
+                      const numVal = parseFloat(value)
+                      if (!isNaN(numVal) && numVal > 0) {
+                        setVolume(numVal)
+                      }
+                    }
+                  }}
+                  onBlur={() => {
+                    const numVal = parseFloat(volumeInput)
+                    if (isNaN(numVal) || numVal < 0.01) {
+                      setVolumeInput('0.01')
+                      setVolume(0.01)
+                    } else {
+                      setVolumeInput(numVal.toString())
+                      setVolume(numVal)
+                    }
+                  }}
                   className="flex-1 bg-transparent text-center focus:outline-none"
                   style={{ color: 'var(--text-primary)' }}
-                  step="0.01"
-                  min="0.01"
                 />
                 <button 
                   onClick={() => adjustVolume(0.01)}
@@ -413,13 +433,31 @@ const OrderPanel = ({ symbol, orderType, setOrderType, onClose }) => {
                 style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)' }}
               >
                 <input
-                  type="number"
-                  value={volume}
-                  onChange={(e) => setVolume(parseFloat(e.target.value) || 0.01)}
+                  type="text"
+                  inputMode="decimal"
+                  value={volumeInput}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                      setVolumeInput(value)
+                      const numVal = parseFloat(value)
+                      if (!isNaN(numVal) && numVal > 0) {
+                        setVolume(numVal)
+                      }
+                    }
+                  }}
+                  onBlur={() => {
+                    const numVal = parseFloat(volumeInput)
+                    if (isNaN(numVal) || numVal < 0.01) {
+                      setVolumeInput('0.01')
+                      setVolume(0.01)
+                    } else {
+                      setVolumeInput(numVal.toString())
+                      setVolume(numVal)
+                    }
+                  }}
                   className="flex-1 bg-transparent text-center px-3 py-2 focus:outline-none"
                   style={{ color: 'var(--text-primary)' }}
-                  step="0.01"
-                  min="0.01"
                 />
                 <button 
                   onClick={() => adjustVolume(-0.01)}

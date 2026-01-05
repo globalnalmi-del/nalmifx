@@ -115,11 +115,11 @@ const Orders = () => {
       const rows = filtered.map(t => [
         new Date(t.createdAt).toLocaleString(),
         t.symbol,
-        t.orderType,
-        t.side,
-        t.lots || t.amount,
-        t.entryPrice,
-        t.exitPrice || '-',
+        t.orderType || 'Market',
+        t.type,
+        (t.lots || t.amount)?.toFixed(2),
+        (t.entryPrice || t.price)?.toFixed(5),
+        t.closePrice?.toFixed(5) || '-',
         t.profit?.toFixed(2) || '0.00',
         t.status
       ])
@@ -334,15 +334,15 @@ const Orders = () => {
                     <td className="py-4 px-4">
                       <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{trade.symbol}</span>
                     </td>
-                    <td className="py-4 px-4 text-sm capitalize" style={{ color: 'var(--text-secondary)' }}>{trade.orderType}</td>
+                    <td className="py-4 px-4 text-sm capitalize" style={{ color: 'var(--text-secondary)' }}>{trade.orderType || 'Market'}</td>
                     <td className="py-4 px-4">
-                      <span className={`flex items-center gap-1 text-sm font-medium ${trade.side === 'buy' ? 'text-green-500' : 'text-red-500'}`}>
-                        {trade.side === 'buy' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                        {trade.side?.toUpperCase()}
+                      <span className={`flex items-center gap-1 text-sm font-medium ${trade.type === 'buy' ? 'text-green-500' : 'text-red-500'}`}>
+                        {trade.type === 'buy' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                        {trade.type?.toUpperCase()}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-sm" style={{ color: 'var(--text-primary)' }}>{trade.lots || trade.amount}</td>
-                    <td className="py-4 px-4 text-sm" style={{ color: 'var(--text-primary)' }}>{trade.entryPrice?.toFixed(5)}</td>
+                    <td className="py-4 px-4 text-sm" style={{ color: 'var(--text-primary)' }}>{(trade.lots || trade.amount)?.toFixed(2)}</td>
+                    <td className="py-4 px-4 text-sm" style={{ color: 'var(--text-primary)' }}>{(trade.entryPrice || trade.price)?.toFixed(5)}</td>
                     <td className="py-4 px-4 text-sm" style={{ color: 'var(--text-muted)' }}>
                       {trade.stopLoss ? `SL: ${trade.stopLoss}` : '-'} / {trade.takeProfit ? `TP: ${trade.takeProfit}` : '-'}
                     </td>
