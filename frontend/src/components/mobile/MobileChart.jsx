@@ -204,7 +204,9 @@ const MobileChart = () => {
         setTakeProfit('')
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Trade failed')
+      console.error('[MobileChart] Trade error:', err.response?.data || err.message)
+      const errorMsg = err.response?.data?.message || err.message || 'Trade failed'
+      alert(errorMsg)
     } finally {
       setLoading(false)
     }
