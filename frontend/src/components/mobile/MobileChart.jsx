@@ -26,7 +26,7 @@ const MobileChart = () => {
   })
   const [loading, setLoading] = useState(false)
   const [showSymbolPicker, setShowSymbolPicker] = useState(false)
-  const [showTradingPanel, setShowTradingPanel] = useState(false)
+  const [showLotPicker, setShowLotPicker] = useState(false)
   const [instruments, setInstruments] = useState([])
   
   // Trading panel state
