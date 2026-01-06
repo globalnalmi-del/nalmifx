@@ -238,19 +238,15 @@ const MobileChart = () => {
   return (
     <div style={{ 
       backgroundColor: isDark ? '#000' : '#f5f5f7', 
-      height: '100%',
-      minHeight: '100dvh',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden'
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch'
     }}>
       {/* Chart Tabs */}
       <div 
         className="flex items-center px-2 py-2 overflow-x-auto" 
         style={{ 
           backgroundColor: isDark ? '#0a0a0a' : '#fff', 
-          borderBottom: `1px solid ${isDark ? '#1a1a1a' : '#e5e5ea'}`,
-          flexShrink: 0
+          borderBottom: `1px solid ${isDark ? '#1a1a1a' : '#e5e5ea'}`
         }}
       >
         {chartTabs.map(tab => (
@@ -282,22 +278,18 @@ const MobileChart = () => {
         </button>
       </div>
 
-      {/* Chart Area - takes remaining space */}
-      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      {/* Chart Area - Limited height (65% of viewport) */}
+      <div style={{ height: '65vh', minHeight: '300px', maxHeight: '500px' }}>
         <TradingChart symbol={selectedSymbol} />
       </div>
 
-      {/* Buy/Sell Panel - Sticky at bottom with safe area support */}
+      {/* Buy/Sell Panel - Normal flow, scroll to reach */}
       <div 
         style={{ 
           backgroundColor: isDark ? '#0a0a0a' : '#fff', 
           borderTop: `1px solid ${isDark ? '#1a1a1a' : '#e5e5ea'}`,
           padding: '10px 12px',
-          paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
-          flexShrink: 0,
-          position: 'sticky',
-          bottom: 0,
-          zIndex: 50
+          paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))'
         }}
       >
         {/* Trading Options Row */}
