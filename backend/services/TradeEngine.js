@@ -488,7 +488,10 @@ class TradeEngine {
       ? tradingAccount.accountNumber 
       : `${user.firstName?.substring(0,2) || 'US'}${user._id.toString().slice(-6)}`.toUpperCase();
 
-    console.log(`[TradeEngine] Creating PENDING order: ${orderType} ${type} ${amount} ${symbol} @ ${targetPrice}`);
+    console.log(`[TradeEngine] ========== CREATING PENDING ORDER ==========`);
+    console.log(`[TradeEngine] orderType: ${orderType}, type: ${type}, symbol: ${symbol}`);
+    console.log(`[TradeEngine] targetPrice: ${targetPrice}, amount: ${amount}`);
+    console.log(`[TradeEngine] This will ONLY save order, NO execution`);
 
     // Create pending trade - NO margin deduction, NO balance change
     const trade = await Trade.create({
@@ -510,7 +513,14 @@ class TradeEngine {
       status: 'pending'          // CRITICAL: Status must be 'pending'
     });
 
-    console.log(`[TradeEngine] Pending order created: ${trade._id}, status: ${trade.status}`);
+    console.log(`[TradeEngine] ========== PENDING ORDER CREATED ==========`);
+    console.log(`[TradeEngine] Trade ID: ${trade._id}`);
+    console.log(`[TradeEngine] Status: ${trade.status} (MUST BE 'pending')`);
+    console.log(`[TradeEngine] Order Type: ${trade.orderType}`);
+    console.log(`[TradeEngine] Trigger Price: ${trade.triggerPrice}`);
+    console.log(`[TradeEngine] Margin: ${trade.margin} (MUST BE 0)`);
+    console.log(`[TradeEngine] Trading Charge: ${trade.tradingCharge} (MUST BE 0)`);
+    console.log(`[TradeEngine] ========== END PENDING ORDER CREATION ==========`);
 
     // Notify user
     this.notifyUser(userId, 'orderPlaced', {
@@ -529,7 +539,17 @@ class TradeEngine {
     try {
       const pendingTrades = await Trade.find({ status: 'pending' });
       
+      console.log(`[TradeEngine] ========== CHECKING PENDING ORDERS ==========`);
+      console.log(`[TradeEngine] Found ${pendingTrades.length} pending orders`);
+      
       for (const trade of pendingTrades) {
+        // CRITICAL HARD GUARD: Only process if status is 'pending'
+        if (trade.status !== 'pending') {
+          console.log(`[TradeEngine] SKIPPING order ${trade._id} - status is '${trade.status}', not 'pending'`);
+          continue;
+        }
+        
+        console.log(`[TradeEngine] Checking order ${trade._id}: ${trade.orderType} ${trade.type} @ ${trade.triggerPrice}`);
         const price = this.getPrice(trade.symbol);
         if (!price) continue;
 
@@ -591,7 +611,13 @@ class TradeEngine {
         }
 
         if (shouldExecute) {
+          console.log(`[TradeEngine] ========== TRIGGER CONDITION MET ==========`);
+          console.log(`[TradeEngine] Order ${trade._id} will be ACTIVATED`);
+          console.log(`[TradeEngine] Current price meets trigger condition`);
+          console.log(`[TradeEngine] This is the ONLY way pending orders become open positions`);
           await this.activatePendingOrder(trade, executionPrice);
+        } else {
+          console.log(`[TradeEngine] Order ${trade._id} - trigger condition NOT met, staying pending`);
         }
       }
     } catch (err) {
@@ -601,9 +627,24 @@ class TradeEngine {
 
   /**
    * Activate a pending order - NOW deduct margin and open position
+   * CRITICAL: This is the ONLY function that can convert pending → open
    */
   async activatePendingOrder(trade, executionPrice) {
     try {
+      // HARD GUARD: Only activate if status is 'pending'
+      if (trade.status !== 'pending') {
+        console.log(`[TradeEngine] ========== ACTIVATION BLOCKED ==========`);
+        console.log(`[TradeEngine] Order ${trade._id} status is '${trade.status}', not 'pending'`);
+        console.log(`[TradeEngine] Activation BLOCKED - this should never happen`);
+        return;
+      }
+      
+      console.log(`[TradeEngine] ========== ACTIVATING PENDING ORDER ==========`);
+      console.log(`[TradeEngine] Order ID: ${trade._id}`);
+      console.log(`[TradeEngine] Current Status: ${trade.status}`);
+      console.log(`[TradeEngine] Execution Price: ${executionPrice}`);
+      console.log(`[TradeEngine] NOW deducting margin and creating position`);
+      
       const userId = trade.user;
       const user = await User.findById(userId);
       if (!user) {
