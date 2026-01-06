@@ -315,13 +315,14 @@ const MobileChart = () => {
         </button>
       </div>
 
-      {/* Chart Area - Fixed height, does not grow */}
+      {/* Chart Area - Fixed height using viewport units for reliability */}
       <div style={{ 
-        height: '40%', 
+        height: '35vh', 
         minHeight: '200px', 
         maxHeight: '350px',
         flexShrink: 0,
-        flexGrow: 0
+        flexGrow: 0,
+        position: 'relative'
       }}>
         <TradingChart symbol={selectedSymbol} />
       </div>
