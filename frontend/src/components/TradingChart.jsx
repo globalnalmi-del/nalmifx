@@ -173,63 +173,52 @@ const TradingChart = ({ symbol }) => {
   useEffect(() => {
     if (!containerRef.current) return
 
-    // Clear previous chart
-    containerRef.current.innerHTML = ''
-
-    // Theme colors
-    const darkColors = {
-      bg: '#000000',
-      toolbar: '#0a0a0a',
-      grid: '#1a1a1a',
-      border: '#2a2a2a',
-      text: '#9ca3af'
-    }
-    
-    const lightColors = {
-      bg: '#ffffff',
-      toolbar: '#f8f9fa',
-      grid: '#e9ecef',
-      border: '#dee2e6',
-      text: '#495057'
-    }
-    
-    const colors = isDark ? darkColors : lightColors
-
-    // Use TradingView Advanced Chart embed widget
     const container = containerRef.current
-    container.innerHTML = `
-      <div class="tradingview-widget-container" style="height:100%;width:100%">
-        <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
-      </div>
-    `
     
-    const script = document.createElement('script')
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js'
-    script.async = true
-    script.type = 'text/javascript'
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: getSymbol(symbol),
-      interval: "5",
-      timezone: "Etc/UTC",
-      theme: isDark ? "dark" : "light",
-      style: "1",
-      locale: "en",
-      allow_symbol_change: false,
-      calendar: false,
-      hide_top_toolbar: false,
-      hide_legend: true,
-      save_image: false,
-      hide_side_toolbar: false,
-      withdateranges: false,
-      details: false,
-      hotlist: false,
-      support_host: "https://www.tradingview.com"
-    })
-    
-    container.querySelector('.tradingview-widget-container').appendChild(script)
+    // Clear previous chart with a small delay to avoid race conditions
+    const timeoutId = setTimeout(() => {
+      container.innerHTML = ''
+
+      // Use TradingView Advanced Chart embed widget
+      const widgetContainer = document.createElement('div')
+      widgetContainer.className = 'tradingview-widget-container'
+      widgetContainer.style.cssText = 'height:100%;width:100%'
+      
+      const widgetDiv = document.createElement('div')
+      widgetDiv.className = 'tradingview-widget-container__widget'
+      widgetDiv.style.cssText = 'height:100%;width:100%'
+      widgetContainer.appendChild(widgetDiv)
+      
+      const script = document.createElement('script')
+      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js'
+      script.async = true
+      script.type = 'text/javascript'
+      script.innerHTML = JSON.stringify({
+        autosize: true,
+        symbol: getSymbol(symbol),
+        interval: "5",
+        timezone: "Etc/UTC",
+        theme: isDark ? "dark" : "light",
+        style: "1",
+        locale: "en",
+        allow_symbol_change: false,
+        calendar: false,
+        hide_top_toolbar: false,
+        hide_legend: true,
+        save_image: false,
+        hide_side_toolbar: false,
+        withdateranges: false,
+        details: false,
+        hotlist: false,
+        support_host: "https://www.tradingview.com"
+      })
+      
+      widgetContainer.appendChild(script)
+      container.appendChild(widgetContainer)
+    }, 100)
 
     return () => {
+      clearTimeout(timeoutId)
       container.innerHTML = ''
     }
   }, [symbol, isDark])
