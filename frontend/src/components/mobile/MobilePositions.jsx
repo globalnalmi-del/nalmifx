@@ -86,10 +86,7 @@ const MobilePositions = () => {
         socket.on(event, handleSocketTradeEvent(event))
       })
       
-      // Also listen for user-specific events (Method 2 from backend)
-      tradeEvents.forEach(event => {
-        socket.on(`user:${event}`, handleSocketTradeEvent(`user:${event}`))
-      })
+      // Note: user:${event} broadcasts removed for security - all events now go through user rooms only
     }
     
     // Auto-refresh trades every 2 seconds (backup polling)

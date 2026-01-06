@@ -41,8 +41,12 @@ const tradeSchema = new mongoose.Schema({
   },
   orderType: {
     type: String,
-    enum: ['market', 'limit', 'stop', 'stop-loss', 'take-profit'],
+    enum: ['market', 'limit', 'stop', 'buy_limit', 'sell_limit', 'buy_stop', 'sell_stop', 'stop-loss', 'take-profit'],
     default: 'market'
+  },
+  triggerPrice: {
+    type: Number,
+    default: null
   },
   amount: {
     type: Number,

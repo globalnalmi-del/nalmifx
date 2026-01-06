@@ -682,13 +682,16 @@ router.post('/', protect, [
         }
       }
     } else {
-      // Create pending order (limit/stop)
+      // Create pending order (buy_limit, sell_limit, buy_stop, sell_stop)
       if (!price) {
         return res.status(400).json({
           success: false,
           message: 'Price is required for pending orders'
         });
       }
+      
+      console.log(`[Trades] Creating pending order: ${orderType} ${type} ${symbol} @ ${price}`);
+      
       trade = await tradeEngine.executePendingOrder(req.user.id, {
         symbol,
         type,
@@ -697,7 +700,8 @@ router.post('/', protect, [
         price,
         leverage,
         stopLoss,
-        takeProfit
+        takeProfit,
+        tradingAccountId
       });
     }
 

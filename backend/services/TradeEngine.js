@@ -402,69 +402,83 @@ class TradeEngine {
 
   /**
    * Execute pending order (limit/stop)
+   * IMPORTANT: Pending orders do NOT deduct margin until triggered
    */
   async executePendingOrder(userId, orderData) {
-    const { symbol, type, orderType, amount, price: targetPrice, leverage = 1, stopLoss, takeProfit } = orderData;
+    const { symbol, type, orderType, amount, price: targetPrice, leverage = 100, stopLoss, takeProfit, tradingAccountId } = orderData;
     
     const currentPrice = this.getPrice(symbol);
     if (!currentPrice) {
-      throw new Error(`Invalid symbol: ${symbol}`);
+      throw new Error(`Invalid symbol: ${symbol}. Market may be closed.`);
     }
 
-    // Calculate margin required (reserve it)
-    const margin = this.calculateMargin(symbol, amount, targetPrice, leverage);
-    const fee = margin * 0.001;
-    const totalRequired = margin + fee;
-
-    // Check user balance
+    // Get user
     const user = await User.findById(userId);
     if (!user) throw new Error('User not found');
-    if (user.balance < totalRequired) {
-      throw new Error(`Insufficient balance. Required: $${totalRequired.toFixed(2)}`);
+
+    // Find trading account
+    let tradingAccount = null;
+    if (tradingAccountId) {
+      tradingAccount = await TradingAccount.findOne({ 
+        _id: tradingAccountId,
+        user: userId, 
+        status: 'active'
+      }).populate('accountType');
+    }
+    if (!tradingAccount) {
+      tradingAccount = await TradingAccount.findOne({ 
+        user: userId, 
+        status: 'active',
+        isDemo: false 
+      }).populate('accountType').sort({ createdAt: -1 });
+    }
+
+    const usesTradingAccount = !!tradingAccount;
+    const availableBalance = usesTradingAccount ? tradingAccount.balance : user.balance;
+
+    // Calculate estimated margin (for validation only - NOT deducted yet)
+    const contractSize = this.getContractSize(symbol);
+    const positionValue = amount * targetPrice * contractSize;
+    const estimatedMargin = positionValue / leverage;
+
+    // Validate user has enough balance (but don't deduct)
+    if (availableBalance < estimatedMargin) {
+      throw new Error(`Insufficient balance for pending order. Estimated margin: $${estimatedMargin.toFixed(2)}, Available: $${availableBalance.toFixed(2)}`);
     }
 
     // Generate client ID
-    const clientId = `${user.firstName?.substring(0,2) || 'US'}${user._id.toString().slice(-6)}`.toUpperCase();
+    const clientId = usesTradingAccount 
+      ? tradingAccount.accountNumber 
+      : `${user.firstName?.substring(0,2) || 'US'}${user._id.toString().slice(-6)}`.toUpperCase();
 
-    // Create pending trade
+    console.log(`[TradeEngine] Creating PENDING order: ${orderType} ${type} ${amount} ${symbol} @ ${targetPrice}`);
+
+    // Create pending trade - NO margin deduction, NO balance change
     const trade = await Trade.create({
       user: userId,
+      tradingAccount: usesTradingAccount ? tradingAccount._id : null,
       clientId,
       tradeSource: 'manual',
       symbol: symbol.toUpperCase(),
       type,
       orderType,
       amount,
-      price: targetPrice,
+      price: targetPrice,        // This is the trigger price for pending orders
+      triggerPrice: targetPrice, // Store trigger price explicitly
       leverage,
       stopLoss,
       takeProfit,
-      fee,
-      margin,
-      status: 'pending'
+      margin: 0,                 // No margin reserved yet
+      tradingCharge: 0,          // No charges yet
+      status: 'pending'          // CRITICAL: Status must be 'pending'
     });
 
-    // Reserve margin
-    const balanceBefore = user.balance;
-    user.balance -= totalRequired;
-    await user.save();
-
-    // Create transaction record
-    await Transaction.create({
-      user: userId,
-      type: 'margin_reserved',
-      amount: -totalRequired,
-      description: `Margin reserved for pending ${orderType} order: ${symbol}`,
-      balanceBefore,
-      balanceAfter: user.balance,
-      status: 'completed',
-      reference: trade._id
-    });
+    console.log(`[TradeEngine] Pending order created: ${trade._id}, status: ${trade.status}`);
 
     // Notify user
     this.notifyUser(userId, 'orderPlaced', {
       trade,
-      message: `Pending ${orderType} order placed: ${amount} ${symbol} @ ${targetPrice}`
+      message: `Pending ${orderType.replace('_', ' ').toUpperCase()} order placed: ${amount} ${symbol} @ ${targetPrice}`
     });
 
     return trade;
@@ -472,6 +486,7 @@ class TradeEngine {
 
   /**
    * Check and execute pending orders
+   * Called periodically to check if any pending orders should be triggered
    */
   async checkPendingOrders() {
     try {
@@ -483,27 +498,59 @@ class TradeEngine {
 
         let shouldExecute = false;
         let executionPrice = null;
+        const triggerPrice = trade.triggerPrice || trade.price;
 
-        if (trade.orderType === 'limit') {
-          // Limit buy: execute when ask <= target price
-          // Limit sell: execute when bid >= target price
-          if (trade.type === 'buy' && price.ask <= trade.price) {
-            shouldExecute = true;
-            executionPrice = price.ask;
-          } else if (trade.type === 'sell' && price.bid >= trade.price) {
-            shouldExecute = true;
-            executionPrice = price.bid;
-          }
-        } else if (trade.orderType === 'stop') {
-          // Stop buy: execute when ask >= target price
-          // Stop sell: execute when bid <= target price
-          if (trade.type === 'buy' && price.ask >= trade.price) {
-            shouldExecute = true;
-            executionPrice = price.ask;
-          } else if (trade.type === 'sell' && price.bid <= trade.price) {
-            shouldExecute = true;
-            executionPrice = price.bid;
-          }
+        // Handle all pending order types
+        switch (trade.orderType) {
+          case 'buy_limit':
+          case 'limit':
+            // BUY LIMIT: Execute when ASK price drops to or below trigger price
+            if (trade.type === 'buy' && price.ask <= triggerPrice) {
+              shouldExecute = true;
+              executionPrice = price.ask;
+              console.log(`[TradeEngine] BUY LIMIT triggered: ${trade.symbol} ask=${price.ask} <= trigger=${triggerPrice}`);
+            }
+            // SELL LIMIT: Execute when BID price rises to or above trigger price
+            else if (trade.type === 'sell' && price.bid >= triggerPrice) {
+              shouldExecute = true;
+              executionPrice = price.bid;
+              console.log(`[TradeEngine] SELL LIMIT triggered: ${trade.symbol} bid=${price.bid} >= trigger=${triggerPrice}`);
+            }
+            break;
+            
+          case 'sell_limit':
+            // SELL LIMIT: Execute when BID price rises to or above trigger price
+            if (price.bid >= triggerPrice) {
+              shouldExecute = true;
+              executionPrice = price.bid;
+              console.log(`[TradeEngine] SELL LIMIT triggered: ${trade.symbol} bid=${price.bid} >= trigger=${triggerPrice}`);
+            }
+            break;
+            
+          case 'buy_stop':
+          case 'stop':
+            // BUY STOP: Execute when ASK price rises to or above trigger price
+            if (trade.type === 'buy' && price.ask >= triggerPrice) {
+              shouldExecute = true;
+              executionPrice = price.ask;
+              console.log(`[TradeEngine] BUY STOP triggered: ${trade.symbol} ask=${price.ask} >= trigger=${triggerPrice}`);
+            }
+            // SELL STOP: Execute when BID price drops to or below trigger price
+            else if (trade.type === 'sell' && price.bid <= triggerPrice) {
+              shouldExecute = true;
+              executionPrice = price.bid;
+              console.log(`[TradeEngine] SELL STOP triggered: ${trade.symbol} bid=${price.bid} <= trigger=${triggerPrice}`);
+            }
+            break;
+            
+          case 'sell_stop':
+            // SELL STOP: Execute when BID price drops to or below trigger price
+            if (price.bid <= triggerPrice) {
+              shouldExecute = true;
+              executionPrice = price.bid;
+              console.log(`[TradeEngine] SELL STOP triggered: ${trade.symbol} bid=${price.bid} <= trigger=${triggerPrice}`);
+            }
+            break;
         }
 
         if (shouldExecute) {
@@ -516,20 +563,95 @@ class TradeEngine {
   }
 
   /**
-   * Activate a pending order
+   * Activate a pending order - NOW deduct margin and open position
    */
   async activatePendingOrder(trade, executionPrice) {
-    trade.price = executionPrice;
-    trade.status = 'open';
-    trade.activatedAt = new Date();
-    await trade.save();
+    try {
+      const userId = trade.user;
+      const user = await User.findById(userId);
+      if (!user) {
+        console.error(`[TradeEngine] Cannot activate pending order - user not found: ${userId}`);
+        return;
+      }
 
-    this.notifyUser(trade.user, 'pendingOrderActivated', {
-      trade,
-      message: `Pending order activated: ${trade.type.toUpperCase()} ${trade.amount} ${trade.symbol} @ ${executionPrice}`
-    });
+      // Get trading account if exists
+      let tradingAccount = null;
+      if (trade.tradingAccount) {
+        tradingAccount = await TradingAccount.findById(trade.tradingAccount).populate('accountType');
+      }
 
-    console.log(`[TradeEngine] Pending order activated: ${trade._id}`);
+      const usesTradingAccount = !!tradingAccount;
+      const availableBalance = usesTradingAccount ? tradingAccount.balance : user.balance;
+
+      // Calculate margin and charges NOW (at activation time)
+      const contractSize = this.getContractSize(trade.symbol);
+      const positionValue = trade.amount * executionPrice * contractSize;
+      const margin = positionValue / trade.leverage;
+
+      // Get charges
+      const accountTypeId = tradingAccount?.accountType?._id || null;
+      const charges = await this.getChargesForTrade(trade.symbol, userId, accountTypeId);
+      const commission = trade.amount * (charges.commissionPerLot || 0);
+      const tradingCharge = Math.round(commission * 100) / 100;
+      const totalRequired = margin + tradingCharge;
+
+      // Check if user still has enough balance
+      if (availableBalance < totalRequired) {
+        console.log(`[TradeEngine] Pending order cancelled - insufficient balance: ${trade._id}`);
+        trade.status = 'cancelled';
+        trade.closeReason = 'margin_call';
+        trade.closedAt = new Date();
+        await trade.save();
+        
+        this.notifyUser(userId, 'orderCancelled', {
+          trade,
+          message: `Pending order cancelled: Insufficient balance. Required: $${totalRequired.toFixed(2)}, Available: $${availableBalance.toFixed(2)}`
+        });
+        return;
+      }
+
+      // Deduct margin NOW
+      const balanceBefore = availableBalance;
+      if (usesTradingAccount) {
+        tradingAccount.balance -= totalRequired;
+        tradingAccount.margin += margin;
+        tradingAccount.totalTrades += 1;
+        await tradingAccount.save();
+      } else {
+        user.balance -= totalRequired;
+        await user.save();
+      }
+
+      // Update trade with execution details
+      trade.price = executionPrice;
+      trade.margin = margin;
+      trade.tradingCharge = tradingCharge;
+      trade.commission = commission;
+      trade.status = 'open';
+      trade.activatedAt = new Date();
+      await trade.save();
+
+      // Create transaction record
+      await Transaction.create({
+        user: userId,
+        type: 'margin_deduction',
+        amount: -totalRequired,
+        description: `Pending order activated: ${trade.type.toUpperCase()} ${trade.amount} ${trade.symbol} @ ${executionPrice}`,
+        balanceBefore,
+        balanceAfter: usesTradingAccount ? tradingAccount.balance : user.balance,
+        status: 'completed',
+        reference: `${trade._id}_activated_${Date.now()}`
+      });
+
+      this.notifyUser(userId, 'pendingOrderActivated', {
+        trade,
+        message: `Pending order activated: ${trade.type.toUpperCase()} ${trade.amount} ${trade.symbol} @ ${executionPrice}`
+      });
+
+      console.log(`[TradeEngine] Pending order activated: ${trade._id}, margin deducted: $${totalRequired.toFixed(2)}`);
+    } catch (error) {
+      console.error(`[TradeEngine] Error activating pending order ${trade._id}:`, error);
+    }
   }
 
   /**
