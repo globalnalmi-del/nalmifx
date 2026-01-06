@@ -106,7 +106,7 @@ app.get('/api/health', (req, res) => {
 app.get('/api/websocket/status', (req, res) => {
   res.json({
     success: true,
-    ...socketManager.getStats()
+    ...socketManager.getStatus()
   });
 });
 
