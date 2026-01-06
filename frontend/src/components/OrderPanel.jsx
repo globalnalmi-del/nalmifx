@@ -250,7 +250,7 @@ const OrderPanel = ({ symbol, orderType, setOrderType, onClose }) => {
   }
 
   return (
-    <div className="w-72 h-full flex flex-col transition-colors" style={styles.panel}>
+    <div className="w-72 flex flex-col transition-colors" style={{ ...styles.panel, height: '100%', maxHeight: '100%', minHeight: 0 }}>
       {/* Header */}
       <div 
         className="flex items-center justify-between p-4"

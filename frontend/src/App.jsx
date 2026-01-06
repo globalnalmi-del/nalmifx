@@ -666,8 +666,8 @@ function App({ initialView = 'home' }) {
         {/* Order Panel */}
         {showOrderPanel && (
           <div 
-            className="w-80 flex-shrink-0 overflow-hidden"
-            style={{ backgroundColor: 'var(--bg-secondary)', borderLeft: '1px solid var(--border-color)' }}
+            className="w-80 flex-shrink-0 flex flex-col"
+            style={{ backgroundColor: 'var(--bg-secondary)', borderLeft: '1px solid var(--border-color)', maxHeight: '100%' }}
           >
             <OrderPanel 
               symbol={selectedSymbol}
