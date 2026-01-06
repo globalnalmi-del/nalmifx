@@ -369,11 +369,16 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
       {/* iOS-style Trade Popup */}
       {showTradePopup && selectedSymbol && (
         <div 
-          className="fixed inset-0 z-50 ios-sheet-backdrop"
+          className="fixed z-50 ios-sheet-backdrop"
           style={{
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'flex-end'
+            justifyContent: 'flex-end',
+            paddingBottom: 'calc(70px + env(safe-area-inset-bottom, 0px))'
           }}
         >
           <div 
@@ -382,10 +387,10 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
               background: isDark ? 'rgba(28, 28, 30, 0.98)' : '#fff',
               backdropFilter: 'blur(40px)',
               WebkitBackdropFilter: 'blur(40px)',
-              maxHeight: '85vh',
+              maxHeight: '80vh',
               overflowY: 'auto',
               WebkitOverflowScrolling: 'touch',
-              paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))'
+              paddingBottom: '20px'
             }}
           >
             {/* Handle bar */}

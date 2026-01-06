@@ -235,7 +235,9 @@ const MobileChart = () => {
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
-          gap: '8px'
+          gap: '8px',
+          paddingBottom: '12px',
+          marginBottom: '0'
         }}
       >
         <button
