@@ -220,7 +220,7 @@ const TradingChart = ({ symbol }) => {
       hide_top_toolbar: false,
       hide_legend: true,
       save_image: false,
-      hide_side_toolbar: true,
+      hide_side_toolbar: false,
       withdateranges: false,
       details: false,
       hotlist: false,
