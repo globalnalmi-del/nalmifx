@@ -68,38 +68,70 @@ const MobileTrade = ({ onBack }) => {
   }
 
   return (
-    <div className="h-full flex flex-col" style={{ backgroundColor: isDark ? '#000000' : '#f5f5f7' }}>
+    <div 
+      className="flex flex-col" 
+      style={{ 
+        backgroundColor: isDark ? '#000000' : '#f5f5f7',
+        height: '100%',
+        minHeight: '100vh',
+        minHeight: '100dvh',
+        position: 'relative'
+      }}
+    >
       {/* Trade Notifications */}
       <TradeNotifications />
       
-      {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      {/* Content - with padding for fixed bottom nav */}
+      <div 
+        className="flex-1 overflow-hidden"
+        style={{ paddingBottom: '70px' }}
+      >
         {renderContent()}
       </div>
 
-      {/* Bottom Trade Navigation */}
+      {/* Bottom Trade Navigation - Fixed */}
       <nav 
-        className="flex items-center justify-around"
         style={{ 
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-around',
           backgroundColor: isDark ? '#1c1c1e' : '#ffffff',
           borderTop: `1px solid ${isDark ? '#2c2c2e' : '#e5e5ea'}`,
           paddingTop: '8px',
-          paddingBottom: 'max(8px, env(safe-area-inset-bottom))'
+          paddingBottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
+          minHeight: '60px',
+          zIndex: 9999
         }}
       >
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="flex flex-col items-center flex-1 py-1"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              flex: 1,
+              padding: '4px 0',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}
           >
             <tab.icon 
               size={20} 
               color={activeTab === tab.id ? '#3b82f6' : (isDark ? '#8e8e93' : '#6b6b6b')} 
             />
             <span 
-              className="text-[10px] mt-0.5"
-              style={{ color: activeTab === tab.id ? '#3b82f6' : (isDark ? '#8e8e93' : '#6b6b6b') }}
+              style={{ 
+                fontSize: '10px', 
+                marginTop: '2px',
+                color: activeTab === tab.id ? '#3b82f6' : (isDark ? '#8e8e93' : '#6b6b6b') 
+              }}
             >
               {tab.label}
             </span>
