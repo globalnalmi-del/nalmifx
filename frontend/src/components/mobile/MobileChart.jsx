@@ -198,6 +198,16 @@ const MobileChart = () => {
         tradeData.price = parseFloat(entryPrice)
       }
       
+      // DEBUG: Log what we're sending
+      console.log('[MobileChart] ========== SENDING ORDER ==========');
+      console.log('[MobileChart] orderMode:', orderMode);
+      console.log('[MobileChart] orderType:', tradeData.orderType);
+      console.log('[MobileChart] type:', tradeData.type);
+      console.log('[MobileChart] symbol:', tradeData.symbol);
+      console.log('[MobileChart] price:', tradeData.price);
+      console.log('[MobileChart] amount:', tradeData.amount);
+      console.log('[MobileChart] Is Pending Order:', orderMode === 'pending');
+      
       // Add SL/TP if enabled
       if (showStopLoss && stopLoss) {
         tradeData.stopLoss = parseFloat(stopLoss)
