@@ -796,7 +796,7 @@ class TradeEngine {
         try {
           const IBCommissionEngine = require('./ibCommissionEngine');
           const ibEngine = new IBCommissionEngine(this.io);
-          await ibEngine.processTradeCommission(trade, user, tradingCharge);
+          await ibEngine.processTradeCommission(trade, user, tradingChargeOnOpen);
         } catch (ibErr) {
           console.error('[TradeEngine] IB commission error:', ibErr);
         }
