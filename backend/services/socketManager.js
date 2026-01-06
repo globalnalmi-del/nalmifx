@@ -252,8 +252,8 @@ class SocketManager {
       // Exotic pairs
       'USDCNH', 'USDHKD', 'USDSGD', 'USDTHB', 'USDKRW',
       'EURKRW', 'JPYKRW', 'CNYKRW', 'GBPKRW',
-      // Metals
-      'XAUUSD', 'XAGUSD', 'XAUEUR', 'XAUTHB',
+      // Metals (all confirmed working with AllTick)
+      'XAUUSD', 'XAGUSD', 'XAUEUR', 'XAUAUD', 'XAUCNH', 'XAUSGD', 'XAUTHB', 'XAGEUR', 'XAGSGD',
       // Crypto (USDT pairs - confirmed working)
       'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT',
       'DOGEUSDT', 'ADAUSDT', 'AVAXUSDT', 'DOTUSDT', 'LINKUSDT',
