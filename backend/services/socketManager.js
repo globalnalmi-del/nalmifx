@@ -286,11 +286,19 @@ class SocketManager {
         try {
           const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
           const userId = decoded.id || decoded.userId;
+          const userRole = decoded.role;
           if (userId) {
+            // SECURITY: Each user joins only their own room
             socket.join(`user_${userId}`);
             const client = this.clients.get(socket.id);
             if (client) client.userId = userId;
             console.log(`[Socket.IO] User ${userId} joined room user_${userId}`);
+            
+            // Admin users also join admin room for dashboard updates
+            if (userRole === 'admin' || userRole === 'superadmin') {
+              socket.join('admin_room');
+              console.log(`[Socket.IO] Admin ${userId} joined admin_room`);
+            }
           }
         } catch (err) {
           console.log(`[Socket.IO] Token verification failed:`, err.message);

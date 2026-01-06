@@ -77,14 +77,7 @@ class SocketService {
       })
     })
     
-    // Also listen for user-specific events (Method 2 from backend)
-    tradeEvents.forEach(event => {
-      this.socket.on(`user:${event}`, (data) => {
-        console.log(`[SocketService] User Event: user:${event}`, data)
-        window.dispatchEvent(new CustomEvent(event, { detail: data }))
-        window.dispatchEvent(new CustomEvent('tradeUpdate', { detail: { event, data } }))
-      })
-    })
+    // Note: user:${event} broadcasts removed for security - all events now go through user rooms only
 
     // Forward price updates
     this.socket.on('tick', (data) => {

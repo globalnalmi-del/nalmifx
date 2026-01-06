@@ -131,20 +131,17 @@ class TradeEngine {
 
   /**
    * Notify user about trade events - ensures sync across web/mobile
-   * Uses both room-based and broadcast for reliability
+   * SECURITY: Only emits to user's specific room, never broadcasts globally
    */
   notifyUser(userId, event, data) {
     if (!this.io) return;
     
     const userIdStr = userId.toString();
     
-    // Method 1: Emit to user's room (for authenticated connections)
+    // SECURITY: Only emit to user's specific room - never broadcast globally
     this.io.to(`user_${userIdStr}`).emit(event, data);
     
-    // Method 2: Also emit with userId in payload for clients that filter
-    this.io.emit(`user:${event}`, { userId: userIdStr, ...data });
-    
-    // Method 3: Emit trade-specific events for real-time sync
+    // Emit trade-specific events for real-time sync (also to user room only)
     if (event === 'orderExecuted' || event === 'tradeClosed' || event === 'pendingOrderActivated') {
       this.io.to(`user_${userIdStr}`).emit('tradesUpdated', { 
         userId: userIdStr, 
@@ -156,11 +153,13 @@ class TradeEngine {
   }
 
   /**
-   * Broadcast trade update to all connected clients (for admin dashboard)
+   * Broadcast trade update to admin room only (for admin dashboard)
+   * SECURITY: Never broadcasts to regular users
    */
   broadcastTradeUpdate(trade, event = 'tradeUpdate') {
     if (!this.io) return;
-    this.io.emit(event, { trade, timestamp: Date.now() });
+    // SECURITY: Only emit to admin room, not globally
+    this.io.to('admin_room').emit(event, { trade, timestamp: Date.now() });
   }
 
   /**
