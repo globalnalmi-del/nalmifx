@@ -33,7 +33,7 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
   const [loading, setLoading] = useState(false)
   const [balance, setBalance] = useState(0)
 
-  const categories = ['All', 'Forex', 'Metals', 'Crypto', 'Stocks', 'Indices', 'Energy']
+  const categories = ['All', 'Forex', 'Metals', 'Crypto']
 
   useEffect(() => {
     fetchInstruments()
