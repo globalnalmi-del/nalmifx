@@ -83,8 +83,13 @@ const MobileTrade = ({ onBack }) => {
       
       {/* Content - with padding for fixed bottom nav */}
       <div 
-        className="flex-1 overflow-hidden"
-        style={{ paddingBottom: '70px' }}
+        className="flex-1"
+        style={{ 
+          paddingBottom: '70px',
+          overflow: 'auto',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
       >
         {renderContent()}
       </div>

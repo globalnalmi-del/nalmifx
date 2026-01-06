@@ -186,7 +186,7 @@ const MobileChart = () => {
   }, {})
 
   return (
-    <div className="h-full flex flex-col" style={{ backgroundColor: isDark ? '#000' : '#f5f5f7' }}>
+    <div className="flex flex-col" style={{ backgroundColor: isDark ? '#000' : '#f5f5f7', height: '100%', minHeight: '100%', position: 'relative' }}>
       {/* Chart Tabs */}
       <div 
         className="flex items-center px-2 py-2 overflow-x-auto" 
@@ -226,9 +226,8 @@ const MobileChart = () => {
         <TradingChart symbol={selectedSymbol} />
       </div>
 
-      {/* Slim Buy/Sell Panel at Bottom */}
+      {/* Slim Buy/Sell Panel at Bottom - Fixed position to ensure visibility */}
       <div 
-        className="px-3 py-2"
         style={{ 
           backgroundColor: isDark ? '#0a0a0a' : '#fff', 
           borderTop: `1px solid ${isDark ? '#1a1a1a' : '#e5e5ea'}`,
@@ -236,8 +235,10 @@ const MobileChart = () => {
           flexDirection: 'row',
           alignItems: 'center',
           gap: '8px',
-          paddingBottom: '12px',
-          marginBottom: '0'
+          padding: '10px 12px',
+          paddingBottom: '14px',
+          flexShrink: 0,
+          minHeight: '56px'
         }}
       >
         <button
