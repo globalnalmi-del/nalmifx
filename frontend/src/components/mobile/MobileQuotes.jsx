@@ -368,14 +368,24 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
 
       {/* iOS-style Trade Popup */}
       {showTradePopup && selectedSymbol && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end ios-sheet-backdrop">
+        <div 
+          className="fixed inset-0 z-50 ios-sheet-backdrop"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end'
+          }}
+        >
           <div 
-            className="rounded-t-3xl overflow-hidden ios-sheet overflow-y-auto"
+            className="rounded-t-3xl ios-sheet"
             style={{ 
               background: isDark ? 'rgba(28, 28, 30, 0.98)' : '#fff',
               backdropFilter: 'blur(40px)',
               WebkitBackdropFilter: 'blur(40px)',
-              maxHeight: '90vh' 
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))'
             }}
           >
             {/* Handle bar */}
