@@ -239,10 +239,90 @@ const MobileChart = () => {
     }
   }
   
-  // Handle pending order submission
+  // Handle pending order submission - SEPARATE from market orders
   const handlePendingOrder = async () => {
-    const type = pendingType.includes('BUY') ? 'buy' : 'sell'
-    await handleTrade(type)
+    // Check kill switch
+    if (isTradingLocked()) {
+      alert('Trading is currently locked. Kill switch is active.')
+      return
+    }
+
+    const activeAccount = JSON.parse(localStorage.getItem('activeTradingAccount') || '{}')
+    if (!activeAccount._id) {
+      alert('Please select a trading account first')
+      return
+    }
+
+    if (!quickLots || quickLots < 0.01) {
+      alert('Invalid lot size')
+      return
+    }
+    
+    // For pending orders, validate entry price
+    if (!entryPrice) {
+      alert('Please enter a price for pending order')
+      return
+    }
+    
+    // Save last used lot size
+    localStorage.setItem('lastLotSize', quickLots.toString())
+
+    setLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        alert('Please login first')
+        setLoading(false)
+        return
+      }
+
+      const type = pendingType.includes('BUY') ? 'buy' : 'sell'
+      
+      const tradeData = {
+        symbol: selectedSymbol,
+        type,
+        amount: quickLots,
+        orderType: pendingType.toLowerCase().replace(' ', '_'), // CRITICAL: This must be buy_limit, sell_limit, etc.
+        tradingAccountId: activeAccount._id,
+        leverage: selectedLeverage,
+        price: parseFloat(entryPrice) // CRITICAL: Must include price for pending orders
+      }
+      
+      // Add SL/TP if enabled
+      if (showStopLoss && stopLoss) {
+        tradeData.stopLoss = parseFloat(stopLoss)
+      }
+      if (showTakeProfit && takeProfit) {
+        tradeData.takeProfit = parseFloat(takeProfit)
+      }
+
+      // DEBUG: Log what we're sending
+      console.log('[MobileChart] ========== SENDING PENDING ORDER ==========');
+      console.log('[MobileChart] orderType:', tradeData.orderType);
+      console.log('[MobileChart] type:', tradeData.type);
+      console.log('[MobileChart] symbol:', tradeData.symbol);
+      console.log('[MobileChart] price:', tradeData.price);
+      console.log('[MobileChart] amount:', tradeData.amount);
+
+      const res = await axios.post('/api/trades', tradeData, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (res.data.success) {
+        window.dispatchEvent(new Event('tradeCreated'))
+        // Reset fields
+        setStopLoss('')
+        setTakeProfit('')
+        setEntryPrice('')
+        alert('Pending order placed!')
+      }
+    } catch (err) {
+      console.error('[MobileChart] Pending order error:', err.response?.data || err.message)
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to place pending order'
+      alert(errorMsg)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const price = prices[selectedSymbol] || { bid: 0, ask: 0 }
