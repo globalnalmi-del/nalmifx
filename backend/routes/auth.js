@@ -126,13 +126,23 @@ router.post('/login', [
       });
     }
 
-    // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
+    // Check password with backward compatibility
+    // comparePassword now returns { isMatch, needsRehash, reason }
+    const passwordResult = await user.comparePassword(password);
+    if (!passwordResult.isMatch) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
+    }
+
+    // If password matched with old hash format, migrate to new hash
+    // This ensures all future logins use the new hashing algorithm
+    if (passwordResult.needsRehash) {
+      console.log(`[Auth] Migrating password hash for user ${user.email} (reason: ${passwordResult.reason})`);
+      user.password = password; // Will be auto-hashed by pre-save hook with new algorithm
+      await user.save();
+      console.log(`[Auth] Password hash migrated successfully for ${user.email}`);
     }
 
     // Check if account is active

@@ -60,9 +60,19 @@ router.post('/login', [
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    const isMatch = await admin.comparePassword(password);
-    if (!isMatch) {
+    // Check password with backward compatibility
+    // comparePassword now returns { isMatch, needsRehash, reason }
+    const passwordResult = await admin.comparePassword(password);
+    if (!passwordResult.isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    // If password matched with old hash format, migrate to new hash
+    if (passwordResult.needsRehash) {
+      console.log(`[AdminAuth] Migrating password hash for admin ${admin.email} (reason: ${passwordResult.reason})`);
+      admin.password = password; // Will be auto-hashed by pre-save hook
+      await admin.save();
+      console.log(`[AdminAuth] Password hash migrated successfully for ${admin.email}`);
     }
 
     if (!admin.isActive) {
