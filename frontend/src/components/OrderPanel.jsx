@@ -217,10 +217,14 @@ const OrderPanel = ({ symbol, orderType, setOrderType, onClose }) => {
       if (orderType === 'market') {
         orderData.orderType = 'market'
       } else {
-        // Pending order
-        const pendingType = pendingOrderType.toLowerCase().replace(' ', '_')
-        orderData.orderType = pendingType.includes('limit') ? 'limit' : 'stop'
+        // Pending order - MUST send exact type: buy_limit, sell_limit, buy_stop, sell_stop
+        orderData.orderType = pendingOrderType.toLowerCase().replace(' ', '_')
         orderData.price = parseFloat(entryPrice)
+        
+        console.log('[OrderPanel] ========== PENDING ORDER ==========')
+        console.log('[OrderPanel] pendingOrderType:', pendingOrderType)
+        console.log('[OrderPanel] orderData.orderType:', orderData.orderType)
+        console.log('[OrderPanel] orderData.price:', orderData.price)
         
         if (!entryPrice) {
           alert('Please enter entry price for pending order')
