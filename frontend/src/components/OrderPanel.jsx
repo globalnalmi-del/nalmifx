@@ -40,7 +40,7 @@ const OrderPanel = ({ symbol, orderType, setOrderType, onClose }) => {
   const [showStopLoss, setShowStopLoss] = useState(false)
   const [takeProfit, setTakeProfit] = useState('')
   const [stopLoss, setStopLoss] = useState('')
-  const [pendingOrderType, setPendingOrderType] = useState('BUY LIMIT')
+  const [pendingTradeType, setPendingTradeType] = useState('buy') // Just 'buy' or 'sell' for pending
   const [marginFree, setMarginFree] = useState(0)
   const [mockPrices, setMockPrices] = useState({})
   const [submitting, setSubmitting] = useState(false)
@@ -165,7 +165,7 @@ const OrderPanel = ({ symbol, orderType, setOrderType, onClose }) => {
     setVolumeInput(newVol.toString())
   }
 
-  const pendingOrderTypes = ['BUY LIMIT', 'SELL LIMIT', 'BUY STOP', 'SELL STOP']
+  // Simplified: User just picks BUY or SELL, backend auto-maps to limit/stop based on price
 
   // Use backend margin if available, otherwise calculate locally
   const marginRequired = chargesInfo?.margin || calculateLocalMargin()
@@ -217,17 +217,18 @@ const OrderPanel = ({ symbol, orderType, setOrderType, onClose }) => {
       if (orderType === 'market') {
         orderData.orderType = 'market'
       } else {
-        // Pending order - MUST send exact type: buy_limit, sell_limit, buy_stop, sell_stop
-        orderData.orderType = pendingOrderType.toLowerCase().replace(' ', '_')
+        // Pending order - just send 'pending', backend will auto-map based on price
+        orderData.orderType = 'pending'
         orderData.price = parseFloat(entryPrice)
+        orderData.type = pendingTradeType // 'buy' or 'sell'
         
         console.log('[OrderPanel] ========== PENDING ORDER ==========')
-        console.log('[OrderPanel] pendingOrderType:', pendingOrderType)
-        console.log('[OrderPanel] orderData.orderType:', orderData.orderType)
+        console.log('[OrderPanel] pendingTradeType:', pendingTradeType)
         console.log('[OrderPanel] orderData.price:', orderData.price)
+        console.log('[OrderPanel] Backend will auto-map to limit/stop based on price')
         
         if (!entryPrice) {
-          alert('Please enter entry price for pending order')
+          alert('Please enter trigger price for pending order')
           return
         }
       }
@@ -391,28 +392,32 @@ const OrderPanel = ({ symbol, orderType, setOrderType, onClose }) => {
           </>
         ) : (
           <>
-            {/* Pending Order Type */}
+            {/* Pending Order Type - Simplified: Just BUY or SELL */}
             <div className="mb-4">
               <label className="text-sm mb-2 block" style={{ color: 'var(--text-secondary)' }}>Order type</label>
               <div className="grid grid-cols-2 gap-2">
-                {pendingOrderTypes.map(type => (
-                  <button
-                    key={type}
-                    onClick={() => setPendingOrderType(type)}
-                    className="py-2 px-3 rounded-lg text-xs font-medium transition-colors"
-                    style={{ 
-                      backgroundColor: pendingOrderType === type 
-                        ? (type.includes('BUY') ? '#3b82f6' : 'var(--bg-hover)')
-                        : 'var(--bg-card)',
-                      color: pendingOrderType === type 
-                        ? (type.includes('BUY') ? '#fff' : 'var(--text-primary)')
-                        : 'var(--text-secondary)',
-                      border: pendingOrderType === type && !type.includes('BUY') ? '1px solid var(--border-color)' : 'none'
-                    }}
-                  >
-                    {type}
-                  </button>
-                ))}
+                <button
+                  onClick={() => setPendingTradeType('buy')}
+                  className="py-3 px-3 rounded-lg text-sm font-medium transition-colors"
+                  style={{ 
+                    backgroundColor: pendingTradeType === 'buy' ? '#3b82f6' : 'var(--bg-card)',
+                    color: pendingTradeType === 'buy' ? '#fff' : 'var(--text-secondary)',
+                    border: pendingTradeType === 'buy' ? 'none' : '1px solid var(--border-color)'
+                  }}
+                >
+                  BUY
+                </button>
+                <button
+                  onClick={() => setPendingTradeType('sell')}
+                  className="py-3 px-3 rounded-lg text-sm font-medium transition-colors"
+                  style={{ 
+                    backgroundColor: pendingTradeType === 'sell' ? 'var(--accent-red)' : 'var(--bg-card)',
+                    color: pendingTradeType === 'sell' ? '#fff' : 'var(--text-secondary)',
+                    border: pendingTradeType === 'sell' ? 'none' : '1px solid var(--border-color)'
+                  }}
+                >
+                  SELL
+                </button>
               </div>
             </div>
             
@@ -624,16 +629,16 @@ const OrderPanel = ({ symbol, orderType, setOrderType, onClose }) => {
         ) : (
           <>
             <button 
-              onClick={() => handleSubmitOrder(pendingOrderType.includes('BUY') ? 'buy' : 'sell')}
+              onClick={() => handleSubmitOrder(pendingTradeType)}
               disabled={submitting || !entryPrice || getTotalRequired() > marginFree}
               className="w-full font-semibold py-3 rounded-lg transition-colors hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
               style={{ 
-                backgroundColor: pendingOrderType.includes('BUY') ? '#3b82f6' : 'var(--accent-red)', 
+                backgroundColor: pendingTradeType === 'buy' ? '#3b82f6' : 'var(--accent-red)', 
                 color: '#fff' 
               }}
             >
               {submitting && <Loader2 size={16} className="animate-spin" />}
-              {submitting ? 'Placing...' : `Place ${pendingOrderType}`}
+              {submitting ? 'Placing...' : `Place Pending ${pendingTradeType.toUpperCase()}`}
             </button>
             <div className="text-xs text-center mt-2" style={{ color: 'var(--text-muted)' }}>
               {volume} lots @ {entryPrice || '-.--'}

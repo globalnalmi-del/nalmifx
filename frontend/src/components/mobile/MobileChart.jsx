@@ -37,7 +37,7 @@ const MobileChart = () => {
   const [stopLoss, setStopLoss] = useState('')
   const [takeProfit, setTakeProfit] = useState('')
   const [orderMode, setOrderMode] = useState('market') // 'market' or 'pending'
-  const [pendingType, setPendingType] = useState('BUY LIMIT') // 'BUY LIMIT', 'SELL LIMIT', 'BUY STOP', 'SELL STOP'
+  const [pendingType, setPendingType] = useState('BUY') // Simplified: just 'BUY' or 'SELL'
   const [entryPrice, setEntryPrice] = useState('')
 
   const activeTab = chartTabs.find(t => t.id === activeTabId) || chartTabs[0]
@@ -188,14 +188,15 @@ const MobileChart = () => {
         symbol: selectedSymbol,
         type,
         amount: quickLots,
-        orderType: orderMode === 'pending' ? pendingType.toLowerCase().replace(' ', '_') : 'market',
+        orderType: orderMode === 'pending' ? 'pending' : 'market', // Simplified: just 'pending', backend auto-maps
         tradingAccountId: activeAccount._id,
         leverage: selectedLeverage
       }
       
-      // Add entry price for pending orders
+      // Add trigger price for pending orders
       if (orderMode === 'pending') {
         tradeData.price = parseFloat(entryPrice)
+        tradeData.type = pendingType.toLowerCase() // 'buy' or 'sell'
       }
       
       // DEBUG: Log what we're sending
@@ -203,10 +204,8 @@ const MobileChart = () => {
       console.log('[MobileChart] orderMode:', orderMode);
       console.log('[MobileChart] orderType:', tradeData.orderType);
       console.log('[MobileChart] type:', tradeData.type);
-      console.log('[MobileChart] symbol:', tradeData.symbol);
       console.log('[MobileChart] price:', tradeData.price);
-      console.log('[MobileChart] amount:', tradeData.amount);
-      console.log('[MobileChart] Is Pending Order:', orderMode === 'pending');
+      console.log('[MobileChart] Backend will auto-map to limit/stop based on price');
       
       // Add SL/TP if enabled
       if (showStopLoss && stopLoss) {
@@ -241,7 +240,7 @@ const MobileChart = () => {
   
   // Handle pending order submission
   const handlePendingOrder = async () => {
-    const type = pendingType.includes('BUY') ? 'buy' : 'sell'
+    const type = pendingType.toLowerCase() // 'buy' or 'sell'
     await handleTrade(type)
   }
 
@@ -362,30 +361,37 @@ const MobileChart = () => {
         {/* Pending Order Type & Price (only show in pending mode) */}
         {orderMode === 'pending' && (
           <div style={{ marginBottom: '10px' }}>
-            <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
-              {['BUY LIMIT', 'SELL LIMIT', 'BUY STOP', 'SELL STOP'].map(type => (
-                <button
-                  key={type}
-                  onClick={() => setPendingType(type)}
-                  style={{ 
-                    padding: '6px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '500',
-                    backgroundColor: pendingType === type 
-                      ? (type.includes('BUY') ? '#3b82f6' : '#ef4444') 
-                      : (isDark ? '#2c2c2e' : '#e5e5ea'),
-                    color: pendingType === type ? '#fff' : (isDark ? '#9ca3af' : '#6b7280'),
-                    border: 'none', cursor: 'pointer'
-                  }}
-                >
-                  {type}
-                </button>
-              ))}
+            {/* Simplified: Just BUY or SELL */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <button
+                onClick={() => setPendingType('BUY')}
+                style={{ 
+                  flex: 1, padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: '600',
+                  backgroundColor: pendingType === 'BUY' ? '#3b82f6' : (isDark ? '#2c2c2e' : '#e5e5ea'),
+                  color: pendingType === 'BUY' ? '#fff' : (isDark ? '#9ca3af' : '#6b7280'),
+                  border: 'none', cursor: 'pointer'
+                }}
+              >
+                BUY
+              </button>
+              <button
+                onClick={() => setPendingType('SELL')}
+                style={{ 
+                  flex: 1, padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: '600',
+                  backgroundColor: pendingType === 'SELL' ? '#ef4444' : (isDark ? '#2c2c2e' : '#e5e5ea'),
+                  color: pendingType === 'SELL' ? '#fff' : (isDark ? '#9ca3af' : '#6b7280'),
+                  border: 'none', cursor: 'pointer'
+                }}
+              >
+                SELL
+              </button>
             </div>
             <input
               type="number"
               inputMode="decimal"
               value={entryPrice}
               onChange={(e) => setEntryPrice(e.target.value)}
-              placeholder={`Entry Price (Current: ${formatPrice(pendingType.includes('BUY') ? price.ask : price.bid, selectedSymbol)})`}
+              placeholder={`Trigger Price (Current: ${formatPrice(pendingType === 'BUY' ? price.ask : price.bid, selectedSymbol)})`}
               style={{ 
                 width: '100%', padding: '10px', borderRadius: '8px', fontSize: '14px',
                 backgroundColor: isDark ? '#1a1a1a' : '#f2f2f7',
@@ -605,7 +611,7 @@ const MobileChart = () => {
               appearance: 'none'
             }}
           >
-            <span>Place {pendingType}</span>
+            <span>Place Pending {pendingType}</span>
             <span style={{ fontSize: '12px', opacity: 0.8 }}>@ {entryPrice || '---'}</span>
           </button>
         )}

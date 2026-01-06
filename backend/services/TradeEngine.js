@@ -412,52 +412,35 @@ class TradeEngine {
       throw new Error(`Invalid symbol: ${symbol}. Market may be closed.`);
     }
 
-    // CRITICAL: Validate trigger price based on order type
-    // Pending orders must have trigger price that is NOT immediately executable
+    // AUTO-MAP order type based on trigger price vs current price
+    // User just selects BUY or SELL + trigger price, we determine the internal type
     const currentAsk = currentPrice.ask;
     const currentBid = currentPrice.bid;
     
-    console.log(`[TradeEngine] Validating pending order: ${orderType} @ ${targetPrice}`);
-    console.log(`[TradeEngine] Current prices: ASK=${currentAsk}, BID=${currentBid}`);
+    let mappedOrderType = orderType;
     
-    switch (orderType) {
-      case 'buy_limit':
-      case 'limit':
-        // BUY LIMIT: Trigger price must be BELOW current ASK (buy cheaper)
-        if (type === 'buy' && targetPrice >= currentAsk) {
-          throw new Error(`BUY LIMIT price (${targetPrice}) must be below current ASK price (${currentAsk.toFixed(5)}). Use Market Order to buy at current price.`);
-        }
-        // SELL LIMIT: Trigger price must be ABOVE current BID (sell higher)
-        if (type === 'sell' && targetPrice <= currentBid) {
-          throw new Error(`SELL LIMIT price (${targetPrice}) must be above current BID price (${currentBid.toFixed(5)}). Use Market Order to sell at current price.`);
-        }
-        break;
-      case 'sell_limit':
-        // SELL LIMIT: Trigger price must be ABOVE current BID (sell higher)
-        if (targetPrice <= currentBid) {
-          throw new Error(`SELL LIMIT price (${targetPrice}) must be above current BID price (${currentBid.toFixed(5)}). Use Market Order to sell at current price.`);
-        }
-        break;
-      case 'buy_stop':
-      case 'stop':
-        // BUY STOP: Trigger price must be ABOVE current ASK (buy on breakout)
-        if (type === 'buy' && targetPrice <= currentAsk) {
-          throw new Error(`BUY STOP price (${targetPrice}) must be above current ASK price (${currentAsk.toFixed(5)}). Use Market Order or BUY LIMIT.`);
-        }
-        // SELL STOP: Trigger price must be BELOW current BID (sell on breakdown)
-        if (type === 'sell' && targetPrice >= currentBid) {
-          throw new Error(`SELL STOP price (${targetPrice}) must be below current BID price (${currentBid.toFixed(5)}). Use Market Order or SELL LIMIT.`);
-        }
-        break;
-      case 'sell_stop':
-        // SELL STOP: Trigger price must be BELOW current BID (sell on breakdown)
-        if (targetPrice >= currentBid) {
-          throw new Error(`SELL STOP price (${targetPrice}) must be below current BID price (${currentBid.toFixed(5)}). Use Market Order or SELL LIMIT.`);
-        }
-        break;
+    // Auto-map if user sends generic 'pending', 'limit', 'stop', or specific types
+    if (type === 'buy') {
+      // BUY: trigger < current ASK = BUY LIMIT, trigger > current ASK = BUY STOP
+      if (targetPrice < currentAsk) {
+        mappedOrderType = 'buy_limit';
+      } else {
+        mappedOrderType = 'buy_stop';
+      }
+    } else if (type === 'sell') {
+      // SELL: trigger > current BID = SELL LIMIT, trigger < current BID = SELL STOP
+      if (targetPrice > currentBid) {
+        mappedOrderType = 'sell_limit';
+      } else {
+        mappedOrderType = 'sell_stop';
+      }
     }
     
-    console.log(`[TradeEngine] Pending order validation PASSED - price will trigger in future`);
+    console.log(`[TradeEngine] ========== PENDING ORDER AUTO-MAPPING ==========`);
+    console.log(`[TradeEngine] User requested: ${type.toUpperCase()} @ ${targetPrice}`);
+    console.log(`[TradeEngine] Current prices: ASK=${currentAsk}, BID=${currentBid}`);
+    console.log(`[TradeEngine] Auto-mapped to: ${mappedOrderType}`);
+    console.log(`[TradeEngine] Order will stay PENDING until trigger price is hit`);
 
     // Get user
     const user = await User.findById(userId);
@@ -499,7 +482,8 @@ class TradeEngine {
       : `${user.firstName?.substring(0,2) || 'US'}${user._id.toString().slice(-6)}`.toUpperCase();
 
     console.log(`[TradeEngine] ========== CREATING PENDING ORDER ==========`);
-    console.log(`[TradeEngine] orderType: ${orderType}, type: ${type}, symbol: ${symbol}`);
+    console.log(`[TradeEngine] Original orderType: ${orderType}, Mapped: ${mappedOrderType}`);
+    console.log(`[TradeEngine] type: ${type}, symbol: ${symbol}`);
     console.log(`[TradeEngine] targetPrice: ${targetPrice}, amount: ${amount}`);
     console.log(`[TradeEngine] This will ONLY save order, NO execution`);
 
@@ -511,7 +495,7 @@ class TradeEngine {
       tradeSource: 'manual',
       symbol: symbol.toUpperCase(),
       type,
-      orderType,
+      orderType: mappedOrderType,  // Use auto-mapped order type
       amount,
       price: targetPrice,        // This is the trigger price for pending orders
       triggerPrice: targetPrice, // Store trigger price explicitly

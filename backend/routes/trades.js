@@ -652,7 +652,7 @@ router.post('/', protect, [
     
     // CRITICAL: Determine if this is a pending order
     const isPendingOrder = orderType !== 'market' && 
-      ['buy_limit', 'sell_limit', 'buy_stop', 'sell_stop', 'limit', 'stop'].includes(orderType);
+      ['buy_limit', 'sell_limit', 'buy_stop', 'sell_stop', 'limit', 'stop', 'pending'].includes(orderType);
     
     console.log(`[Trades] isPendingOrder: ${isPendingOrder}`);
     
