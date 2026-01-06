@@ -33,7 +33,7 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
   const [loading, setLoading] = useState(false)
   const [balance, setBalance] = useState(0)
 
-  const categories = ['All', 'Forex', 'Crypto', 'Metals']
+  const categories = ['All', 'Forex', 'Metals', 'Crypto', 'Stocks', 'Indices', 'Energy']
 
   useEffect(() => {
     fetchInstruments()
@@ -190,8 +190,20 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
   })
 
   const getCategory = (symbol) => {
-    if (symbol.includes('BTC') || symbol.includes('ETH') || symbol.includes('LTC') || symbol.includes('XRP')) return 'Crypto'
-    if (symbol.includes('XAU') || symbol.includes('XAG')) return 'Metals'
+    // Crypto symbols (including USDT pairs)
+    const cryptoSymbols = ['BTC', 'ETH', 'LTC', 'XRP', 'DOGE', 'SOL', 'BNB', 'ADA', 'AVAX', 'DOT', 
+                          'LINK', 'SHIB', 'TRX', 'ATOM', 'UNI', 'NEAR', 'APT', 'ARB', 'OP', 
+                          'INJ', 'PEPE', 'SUI', 'TON', 'BONK', 'FLOKI', 'XLM', 'MATIC', 'RENDER', 'FET', 'WIF']
+    if (cryptoSymbols.some(c => symbol.includes(c))) return 'Crypto'
+    // Metals symbols
+    if (symbol.includes('XAU') || symbol.includes('XAG') || symbol.includes('XPT') || symbol.includes('XPD')) return 'Metals'
+    // US Stocks
+    if (symbol.includes('.US')) return 'Stocks'
+    // Indices
+    if (symbol.includes('US30') || symbol.includes('US500') || symbol.includes('US100') || 
+        symbol.includes('DE30') || symbol.includes('UK100') || symbol.includes('JP225')) return 'Indices'
+    // Energy
+    if (symbol.includes('OIL') || symbol.includes('XNG') || symbol.includes('BRENT') || symbol.includes('NGAS')) return 'Energy'
     return 'Forex'
   }
 
