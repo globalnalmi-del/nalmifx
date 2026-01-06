@@ -585,6 +585,13 @@ router.post('/', protect, [
 
     const { symbol, type, orderType = 'market', amount, price, leverage = 100, stopLoss, takeProfit, tradingAccountId } = req.body;
 
+    // DEBUG: Log incoming order details
+    console.log(`[Trades] ========== NEW ORDER ==========`);
+    console.log(`[Trades] orderType: "${orderType}", type: "${type}", symbol: "${symbol}"`);
+    console.log(`[Trades] price: ${price}, amount: ${amount}, leverage: ${leverage}`);
+    console.log(`[Trades] Is Market Order: ${orderType === 'market'}`);
+    console.log(`[Trades] Is Pending Order: ${orderType !== 'market'}`);
+
     // Check challenge pre-trade rules before allowing trade
     if (tradingAccountId) {
       const preTradeCheck = await checkPreTradeRules(tradingAccountId, req.user.id, { 
@@ -643,8 +650,15 @@ router.post('/', protect, [
 
     let trade;
     
-    if (orderType === 'market') {
+    // CRITICAL: Determine if this is a pending order
+    const isPendingOrder = orderType !== 'market' && 
+      ['buy_limit', 'sell_limit', 'buy_stop', 'sell_stop', 'limit', 'stop'].includes(orderType);
+    
+    console.log(`[Trades] isPendingOrder: ${isPendingOrder}`);
+    
+    if (!isPendingOrder) {
       // Execute market order immediately
+      console.log(`[Trades] Executing MARKET order...`);
       trade = await tradeEngine.executeMarketOrder(req.user.id, {
         symbol,
         type,
@@ -683,6 +697,7 @@ router.post('/', protect, [
       }
     } else {
       // Create pending order (buy_limit, sell_limit, buy_stop, sell_stop)
+      // CRITICAL: This must NOT execute immediately - only save as pending
       if (!price) {
         return res.status(400).json({
           success: false,
@@ -690,7 +705,9 @@ router.post('/', protect, [
         });
       }
       
-      console.log(`[Trades] Creating pending order: ${orderType} ${type} ${symbol} @ ${price}`);
+      console.log(`[Trades] ========== CREATING PENDING ORDER ==========`);
+      console.log(`[Trades] orderType: ${orderType}, type: ${type}, symbol: ${symbol}, triggerPrice: ${price}`);
+      console.log(`[Trades] This order will NOT execute immediately - waiting for price trigger`);
       
       trade = await tradeEngine.executePendingOrder(req.user.id, {
         symbol,
@@ -703,6 +720,8 @@ router.post('/', protect, [
         takeProfit,
         tradingAccountId
       });
+      
+      console.log(`[Trades] Pending order created: ${trade._id}, status: ${trade.status}`);
     }
 
     res.status(201).json({

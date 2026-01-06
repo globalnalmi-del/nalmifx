@@ -412,6 +412,43 @@ class TradeEngine {
       throw new Error(`Invalid symbol: ${symbol}. Market may be closed.`);
     }
 
+    // CRITICAL: Validate trigger price based on order type
+    // Pending orders must have trigger price that is NOT immediately executable
+    const currentAsk = currentPrice.ask;
+    const currentBid = currentPrice.bid;
+    
+    console.log(`[TradeEngine] Validating pending order: ${orderType} @ ${targetPrice}`);
+    console.log(`[TradeEngine] Current prices: ASK=${currentAsk}, BID=${currentBid}`);
+    
+    switch (orderType) {
+      case 'buy_limit':
+        // BUY LIMIT: Trigger price must be BELOW current ASK (buy cheaper)
+        if (targetPrice >= currentAsk) {
+          throw new Error(`BUY LIMIT price (${targetPrice}) must be below current ASK price (${currentAsk.toFixed(5)}). Use Market Order to buy at current price.`);
+        }
+        break;
+      case 'sell_limit':
+        // SELL LIMIT: Trigger price must be ABOVE current BID (sell higher)
+        if (targetPrice <= currentBid) {
+          throw new Error(`SELL LIMIT price (${targetPrice}) must be above current BID price (${currentBid.toFixed(5)}). Use Market Order to sell at current price.`);
+        }
+        break;
+      case 'buy_stop':
+        // BUY STOP: Trigger price must be ABOVE current ASK (buy on breakout)
+        if (targetPrice <= currentAsk) {
+          throw new Error(`BUY STOP price (${targetPrice}) must be above current ASK price (${currentAsk.toFixed(5)}). Use Market Order or BUY LIMIT.`);
+        }
+        break;
+      case 'sell_stop':
+        // SELL STOP: Trigger price must be BELOW current BID (sell on breakdown)
+        if (targetPrice >= currentBid) {
+          throw new Error(`SELL STOP price (${targetPrice}) must be below current BID price (${currentBid.toFixed(5)}). Use Market Order or SELL LIMIT.`);
+        }
+        break;
+    }
+    
+    console.log(`[TradeEngine] Pending order validation PASSED - price will trigger in future`);
+
     // Get user
     const user = await User.findById(userId);
     if (!user) throw new Error('User not found');
