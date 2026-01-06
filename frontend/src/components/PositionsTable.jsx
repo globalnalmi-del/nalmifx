@@ -267,32 +267,34 @@ const PositionsTable = () => {
           ))}
         </div>
         
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, marginLeft: 'auto' }}>
           {/* One Click Trading Toggle Switch */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            <span className="text-[10px] sm:text-xs hidden xs:inline" style={{ color: 'var(--text-muted)' }}>One Click</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>One Click</span>
             <button
               onClick={() => setShowOneClick(!showOneClick)}
-              className="relative flex-shrink-0 transition-all"
               style={{ 
-                width: '36px',
-                height: '20px',
-                borderRadius: '10px',
+                position: 'relative',
+                width: '40px',
+                height: '22px',
+                borderRadius: '11px',
                 backgroundColor: showOneClick ? '#3b82f6' : 'var(--bg-hover)',
                 border: 'none',
                 cursor: 'pointer',
                 padding: 0,
+                flexShrink: 0,
                 WebkitAppearance: 'none',
                 MozAppearance: 'none',
-                appearance: 'none'
+                appearance: 'none',
+                outline: 'none'
               }}
               title="Toggle One Click Trading"
             >
               <div 
                 style={{ 
                   position: 'absolute',
-                  top: '2px',
-                  left: showOneClick ? '18px' : '2px',
+                  top: '3px',
+                  left: showOneClick ? '21px' : '3px',
                   width: '16px',
                   height: '16px',
                   borderRadius: '50%',
@@ -307,16 +309,18 @@ const PositionsTable = () => {
           {/* Quick Trade Buttons - Show when One Click enabled */}
           {showOneClick && (
             <div 
-              className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-1" 
               style={{ 
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
                 backgroundColor: 'rgba(0,0,0,0.4)', 
-                borderRadius: '9999px',
+                borderRadius: '20px',
+                padding: '4px 8px',
                 flexShrink: 0
               }}
             >
               <button
                 onClick={async () => {
-                  // Check kill switch
                   if (isTradingLocked()) {
                     alert('Trading is currently locked. Kill switch is active.')
                     return
@@ -345,7 +349,6 @@ const PositionsTable = () => {
                 style={{ 
                   width: '28px',
                   height: '28px',
-                  minWidth: '28px',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -356,39 +359,40 @@ const PositionsTable = () => {
                   color: 'white',
                   border: 'none',
                   cursor: 'pointer',
+                  flexShrink: 0,
                   WebkitAppearance: 'none',
                   MozAppearance: 'none',
-                  appearance: 'none',
-                  transition: 'transform 0.15s ease'
+                  appearance: 'none'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
               >S</button>
               <input 
-                type="number" 
+                type="text"
+                inputMode="decimal"
                 value={quickLots} 
-                onChange={(e) => setQuickLots(parseFloat(e.target.value) || 0.01)} 
-                step="0.01" 
-                min="0.01"
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value)
+                  if (!isNaN(val) && val > 0) setQuickLots(val)
+                  else if (e.target.value === '') setQuickLots(0.01)
+                }}
                 style={{ 
                   width: '50px',
-                  minWidth: '50px',
+                  height: '24px',
                   textAlign: 'center',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   fontWeight: '600',
                   borderRadius: '4px',
-                  padding: '4px 2px',
+                  padding: '0 4px',
                   backgroundColor: 'rgba(255,255,255,0.15)',
                   color: 'white',
                   border: 'none',
+                  flexShrink: 0,
                   WebkitAppearance: 'none',
                   MozAppearance: 'none',
-                  appearance: 'textfield'
+                  appearance: 'none'
                 }}
               />
               <button
                 onClick={async () => {
-                  // Check kill switch
                   if (isTradingLocked()) {
                     alert('Trading is currently locked. Kill switch is active.')
                     return
@@ -417,7 +421,6 @@ const PositionsTable = () => {
                 style={{ 
                   width: '28px',
                   height: '28px',
-                  minWidth: '28px',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -428,23 +431,25 @@ const PositionsTable = () => {
                   color: 'white',
                   border: 'none',
                   cursor: 'pointer',
+                  flexShrink: 0,
                   WebkitAppearance: 'none',
                   MozAppearance: 'none',
-                  appearance: 'none',
-                  transition: 'transform 0.15s ease'
+                  appearance: 'none'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
               >B</button>
             </div>
           )}
           
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
             Floating P/L:
           </span>
           <span 
-            className="text-sm font-bold"
-            style={{ color: totalPnL >= 0 ? '#3b82f6' : 'var(--accent-red)' }}
+            style={{ 
+              fontSize: '13px', 
+              fontWeight: 'bold',
+              color: totalPnL >= 0 ? '#3b82f6' : 'var(--accent-red)',
+              whiteSpace: 'nowrap'
+            }}
           >
             {totalPnL >= 0 ? '+' : ''}${totalPnL.toFixed(2)}
           </span>
