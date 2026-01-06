@@ -70,13 +70,14 @@ class AllTickService extends EventEmitter {
   /**
    * Subscribe to symbols
    * Crypto symbols are converted to USDT format (e.g., BTCUSD -> BTCUSDT)
-   * Forex pairs are kept as-is (e.g., EURUSD stays EURUSD)
+   * Forex pairs and metals are kept as-is (e.g., EURUSD, XAUUSD stay unchanged)
    */
   async subscribeSymbols(symbols) {
     // Crypto base currencies that should be converted to USDT format
+    // NOTE: XAU and XAG are metals, NOT crypto - they should NOT be converted
     const cryptoBases = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'DOT', 'LINK', 
                          'LTC', 'MATIC', 'SHIB', 'TRX', 'ATOM', 'UNI', 'NEAR', 'APT', 'ARB', 'OP',
-                         'INJ', 'PEPE', 'SUI', 'TON', 'XAU', 'XAG'];
+                         'INJ', 'PEPE', 'SUI', 'TON', 'BONK', 'FLOKI', 'XLM'];
     
     const convertedSymbols = symbols.map(symbol => {
       // Check if it's a crypto symbol that needs USDT conversion
@@ -84,7 +85,7 @@ class AllTickService extends EventEmitter {
       if (isCrypto) {
         return symbol.replace('USD', 'USDT');
       }
-      // Keep forex and other symbols as-is
+      // Keep forex, metals, and other symbols as-is
       return symbol;
     });
 
