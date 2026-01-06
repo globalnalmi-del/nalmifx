@@ -242,7 +242,7 @@ const MobileChart = () => {
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
-      paddingBottom: '80px'
+      paddingBottom: '150px'
     }}>
       {/* Chart Tabs */}
       <div 
