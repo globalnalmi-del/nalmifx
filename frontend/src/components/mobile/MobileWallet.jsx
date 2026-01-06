@@ -226,7 +226,7 @@ const MobileWallet = () => {
         ))}
       </div>
 
-      <div className="flex-1 p-4 pb-24">
+      <div className="flex-1 p-4 overflow-y-auto" style={{ paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
         {/* DEPOSIT TAB */}
         {activeTab === 'deposit' && (
           <div className="space-y-4 pb-4">

@@ -158,7 +158,7 @@ const MobileHome = () => {
   const textSecondary = isDark ? '#6b7280' : '#8e8e93'
 
   return (
-    <div className="h-full p-4 pb-8" style={{ backgroundColor: bgPrimary }}>
+    <div className="h-full p-4" style={{ backgroundColor: bgPrimary, paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
       {/* Header */}
       <div className="mb-4">
         <p className="text-xs" style={{ color: textSecondary }}>{getGreeting()}</p>
