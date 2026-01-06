@@ -68,20 +68,29 @@ class AllTickService extends EventEmitter {
   }
 
   /**
-   * Subscribe to crypto symbols
+   * Subscribe to symbols
+   * Crypto symbols are converted to USDT format (e.g., BTCUSD -> BTCUSDT)
+   * Forex pairs are kept as-is (e.g., EURUSD stays EURUSD)
    */
   async subscribeSymbols(symbols) {
-    // Convert to USDT format for AllTick
-    const usdtSymbols = symbols.map(symbol => {
-      if (symbol.includes('USD') && !symbol.includes('USDT')) {
+    // Crypto base currencies that should be converted to USDT format
+    const cryptoBases = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'DOT', 'LINK', 
+                         'LTC', 'MATIC', 'SHIB', 'TRX', 'ATOM', 'UNI', 'NEAR', 'APT', 'ARB', 'OP',
+                         'INJ', 'PEPE', 'SUI', 'TON', 'XAU', 'XAG'];
+    
+    const convertedSymbols = symbols.map(symbol => {
+      // Check if it's a crypto symbol that needs USDT conversion
+      const isCrypto = cryptoBases.some(base => symbol.startsWith(base) && symbol.endsWith('USD') && !symbol.endsWith('USDT'));
+      if (isCrypto) {
         return symbol.replace('USD', 'USDT');
       }
+      // Keep forex and other symbols as-is
       return symbol;
     });
 
-    console.log(`[AllTick] Subscribing to: ${usdtSymbols.join(', ')}`);
+    console.log(`[AllTick] Subscribing to: ${convertedSymbols.slice(0, 10).join(', ')}... (${convertedSymbols.length} total)`);
     
-    usdtSymbols.forEach(symbol => {
+    convertedSymbols.forEach(symbol => {
       this.subscribedSymbols.add(symbol);
     });
 
