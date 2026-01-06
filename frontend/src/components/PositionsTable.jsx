@@ -267,26 +267,53 @@ const PositionsTable = () => {
           ))}
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           {/* One Click Trading Toggle Switch */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>One Click</span>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="text-[10px] sm:text-xs hidden xs:inline" style={{ color: 'var(--text-muted)' }}>One Click</span>
             <button
               onClick={() => setShowOneClick(!showOneClick)}
-              className="relative w-10 h-5 rounded-full transition-all"
-              style={{ backgroundColor: showOneClick ? '#3b82f6' : 'var(--bg-hover)' }}
+              className="relative flex-shrink-0 transition-all"
+              style={{ 
+                width: '36px',
+                height: '20px',
+                borderRadius: '10px',
+                backgroundColor: showOneClick ? '#3b82f6' : 'var(--bg-hover)',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                WebkitAppearance: 'none',
+                MozAppearance: 'none',
+                appearance: 'none'
+              }}
               title="Toggle One Click Trading"
             >
               <div 
-                className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all shadow"
-                style={{ left: showOneClick ? '22px' : '2px' }}
+                style={{ 
+                  position: 'absolute',
+                  top: '2px',
+                  left: showOneClick ? '18px' : '2px',
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ffffff',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                  transition: 'left 0.2s ease-in-out'
+                }}
               />
             </button>
           </div>
           
           {/* Quick Trade Buttons - Show when One Click enabled */}
           {showOneClick && (
-            <div className="flex items-center gap-1.5 rounded-full px-2 py-1" style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}>
+            <div 
+              className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-1" 
+              style={{ 
+                backgroundColor: 'rgba(0,0,0,0.4)', 
+                borderRadius: '9999px',
+                flexShrink: 0
+              }}
+            >
               <button
                 onClick={async () => {
                   // Check kill switch
@@ -315,8 +342,27 @@ const PositionsTable = () => {
                     alert(err.response?.data?.message || 'Trade failed')
                   }
                 }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all hover:scale-110"
-                style={{ backgroundColor: '#ef4444', color: 'white' }}
+                style={{ 
+                  width: '28px',
+                  height: '28px',
+                  minWidth: '28px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  cursor: 'pointer',
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'none',
+                  appearance: 'none',
+                  transition: 'transform 0.15s ease'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
               >S</button>
               <input 
                 type="number" 
@@ -324,8 +370,21 @@ const PositionsTable = () => {
                 onChange={(e) => setQuickLots(parseFloat(e.target.value) || 0.01)} 
                 step="0.01" 
                 min="0.01"
-                className="w-14 text-center text-xs font-semibold rounded px-1 py-1" 
-                style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: 'none' }} 
+                style={{ 
+                  width: '50px',
+                  minWidth: '50px',
+                  textAlign: 'center',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  borderRadius: '4px',
+                  padding: '4px 2px',
+                  backgroundColor: 'rgba(255,255,255,0.15)',
+                  color: 'white',
+                  border: 'none',
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'none',
+                  appearance: 'textfield'
+                }}
               />
               <button
                 onClick={async () => {
@@ -355,8 +414,27 @@ const PositionsTable = () => {
                     alert(err.response?.data?.message || 'Trade failed')
                   }
                 }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all hover:scale-110"
-                style={{ backgroundColor: '#3b82f6', color: 'white' }}
+                style={{ 
+                  width: '28px',
+                  height: '28px',
+                  minWidth: '28px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  cursor: 'pointer',
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'none',
+                  appearance: 'none',
+                  transition: 'transform 0.15s ease'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
               >B</button>
             </div>
           )}
