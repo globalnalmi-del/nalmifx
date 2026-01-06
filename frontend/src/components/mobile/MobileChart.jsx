@@ -36,6 +36,9 @@ const MobileChart = () => {
   const [showTakeProfit, setShowTakeProfit] = useState(false)
   const [stopLoss, setStopLoss] = useState('')
   const [takeProfit, setTakeProfit] = useState('')
+  const [orderMode, setOrderMode] = useState('market') // 'market' or 'pending'
+  const [pendingType, setPendingType] = useState('BUY LIMIT') // 'BUY LIMIT', 'SELL LIMIT', 'BUY STOP', 'SELL STOP'
+  const [entryPrice, setEntryPrice] = useState('')
 
   const activeTab = chartTabs.find(t => t.id === activeTabId) || chartTabs[0]
   const selectedSymbol = activeTab?.symbol || 'XAUUSD'
@@ -163,6 +166,12 @@ const MobileChart = () => {
       return
     }
     
+    // For pending orders, validate entry price
+    if (orderMode === 'pending' && !entryPrice) {
+      alert('Please enter a price for pending order')
+      return
+    }
+    
     // Save last used lot size
     localStorage.setItem('lastLotSize', quickLots.toString())
 
@@ -179,9 +188,14 @@ const MobileChart = () => {
         symbol: selectedSymbol,
         type,
         amount: quickLots,
-        orderType: 'market',
+        orderType: orderMode === 'pending' ? pendingType.toLowerCase().replace(' ', '_') : 'market',
         tradingAccountId: activeAccount._id,
         leverage: selectedLeverage
+      }
+      
+      // Add entry price for pending orders
+      if (orderMode === 'pending') {
+        tradeData.price = parseFloat(entryPrice)
       }
       
       // Add SL/TP if enabled
@@ -198,10 +212,13 @@ const MobileChart = () => {
 
       if (res.data.success) {
         window.dispatchEvent(new Event('tradeCreated'))
-        setShowTradingPanel(false)
-        // Reset SL/TP
+        // Reset fields
         setStopLoss('')
         setTakeProfit('')
+        setEntryPrice('')
+        if (orderMode === 'pending') {
+          alert(orderMode === 'pending' ? 'Pending order placed!' : 'Trade opened!')
+        }
       }
     } catch (err) {
       console.error('[MobileChart] Trade error:', err.response?.data || err.message)
@@ -210,6 +227,12 @@ const MobileChart = () => {
     } finally {
       setLoading(false)
     }
+  }
+  
+  // Handle pending order submission
+  const handlePendingOrder = async () => {
+    const type = pendingType.includes('BUY') ? 'buy' : 'sell'
+    await handleTrade(type)
   }
 
   const price = prices[selectedSymbol] || { bid: 0, ask: 0 }
@@ -294,6 +317,75 @@ const MobileChart = () => {
           paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))'
         }}
       >
+        {/* Market/Pending Toggle */}
+        <div style={{ 
+          display: 'flex', 
+          marginBottom: '10px',
+          backgroundColor: isDark ? '#1a1a1a' : '#f2f2f7',
+          borderRadius: '8px',
+          padding: '2px'
+        }}>
+          <button
+            onClick={() => setOrderMode('market')}
+            style={{ 
+              flex: 1, padding: '8px', borderRadius: '6px', fontSize: '13px', fontWeight: '600',
+              backgroundColor: orderMode === 'market' ? '#3b82f6' : 'transparent',
+              color: orderMode === 'market' ? '#fff' : (isDark ? '#9ca3af' : '#6b7280'),
+              border: 'none', cursor: 'pointer'
+            }}
+          >
+            Market
+          </button>
+          <button
+            onClick={() => setOrderMode('pending')}
+            style={{ 
+              flex: 1, padding: '8px', borderRadius: '6px', fontSize: '13px', fontWeight: '600',
+              backgroundColor: orderMode === 'pending' ? '#3b82f6' : 'transparent',
+              color: orderMode === 'pending' ? '#fff' : (isDark ? '#9ca3af' : '#6b7280'),
+              border: 'none', cursor: 'pointer'
+            }}
+          >
+            Pending
+          </button>
+        </div>
+
+        {/* Pending Order Type & Price (only show in pending mode) */}
+        {orderMode === 'pending' && (
+          <div style={{ marginBottom: '10px' }}>
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+              {['BUY LIMIT', 'SELL LIMIT', 'BUY STOP', 'SELL STOP'].map(type => (
+                <button
+                  key={type}
+                  onClick={() => setPendingType(type)}
+                  style={{ 
+                    padding: '6px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '500',
+                    backgroundColor: pendingType === type 
+                      ? (type.includes('BUY') ? '#3b82f6' : '#ef4444') 
+                      : (isDark ? '#2c2c2e' : '#e5e5ea'),
+                    color: pendingType === type ? '#fff' : (isDark ? '#9ca3af' : '#6b7280'),
+                    border: 'none', cursor: 'pointer'
+                  }}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+            <input
+              type="number"
+              inputMode="decimal"
+              value={entryPrice}
+              onChange={(e) => setEntryPrice(e.target.value)}
+              placeholder={`Entry Price (Current: ${formatPrice(pendingType.includes('BUY') ? price.ask : price.bid, selectedSymbol)})`}
+              style={{ 
+                width: '100%', padding: '10px', borderRadius: '8px', fontSize: '14px',
+                backgroundColor: isDark ? '#1a1a1a' : '#f2f2f7',
+                color: isDark ? '#fff' : '#000', 
+                border: `1px solid ${isDark ? '#333' : '#e5e5ea'}`
+              }}
+            />
+          </div>
+        )}
+
         {/* Trading Options Row */}
         <div style={{ 
           display: 'flex', 
@@ -425,16 +517,70 @@ const MobileChart = () => {
           </div>
         )}
 
-        {/* Buy/Sell Buttons */}
-        <div style={{ display: 'flex', gap: '8px' }}>
+        {/* Buy/Sell Buttons (Market) or Place Order Button (Pending) */}
+        {orderMode === 'market' ? (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => handleTrade('sell')}
+              disabled={loading}
+              style={{ 
+                flex: 1,
+                padding: '12px 16px',
+                borderRadius: '9999px',
+                backgroundColor: '#ef4444',
+                color: '#ffffff',
+                fontWeight: '600',
+                fontSize: '14px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                opacity: loading ? 0.5 : 1,
+                WebkitAppearance: 'none',
+                appearance: 'none'
+              }}
+            >
+              <span>SELL</span>
+              <span style={{ fontSize: '12px', opacity: 0.8 }}>{formatPrice(price.bid, selectedSymbol)}</span>
+            </button>
+            
+            <button
+              onClick={() => handleTrade('buy')}
+              disabled={loading}
+              style={{ 
+                flex: 1,
+                padding: '12px 16px',
+                borderRadius: '9999px',
+                backgroundColor: '#3b82f6',
+                color: '#ffffff',
+                fontWeight: '600',
+                fontSize: '14px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                opacity: loading ? 0.5 : 1,
+                WebkitAppearance: 'none',
+                appearance: 'none'
+              }}
+            >
+              <span>BUY</span>
+              <span style={{ fontSize: '12px', opacity: 0.8 }}>{formatPrice(price.ask, selectedSymbol)}</span>
+            </button>
+          </div>
+        ) : (
           <button
-            onClick={() => handleTrade('sell')}
-            disabled={loading}
+            onClick={handlePendingOrder}
+            disabled={loading || !entryPrice}
             style={{ 
-              flex: 1,
-              padding: '12px 16px',
+              width: '100%',
+              padding: '14px 16px',
               borderRadius: '9999px',
-              backgroundColor: '#ef4444',
+              backgroundColor: pendingType.includes('BUY') ? '#3b82f6' : '#ef4444',
               color: '#ffffff',
               fontWeight: '600',
               fontSize: '14px',
@@ -443,42 +589,16 @@ const MobileChart = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
-              opacity: loading ? 0.5 : 1,
+              gap: '8px',
+              opacity: (loading || !entryPrice) ? 0.5 : 1,
               WebkitAppearance: 'none',
               appearance: 'none'
             }}
           >
-            <span>SELL</span>
-            <span style={{ fontSize: '12px', opacity: 0.8 }}>{formatPrice(price.bid, selectedSymbol)}</span>
+            <span>Place {pendingType}</span>
+            <span style={{ fontSize: '12px', opacity: 0.8 }}>@ {entryPrice || '---'}</span>
           </button>
-          
-          <button
-            onClick={() => handleTrade('buy')}
-            disabled={loading}
-            style={{ 
-              flex: 1,
-              padding: '12px 16px',
-              borderRadius: '9999px',
-              backgroundColor: '#3b82f6',
-              color: '#ffffff',
-              fontWeight: '600',
-              fontSize: '14px',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              opacity: loading ? 0.5 : 1,
-              WebkitAppearance: 'none',
-              appearance: 'none'
-            }}
-          >
-            <span>BUY</span>
-            <span style={{ fontSize: '12px', opacity: 0.8 }}>{formatPrice(price.ask, selectedSymbol)}</span>
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Lot Size Picker Modal */}
