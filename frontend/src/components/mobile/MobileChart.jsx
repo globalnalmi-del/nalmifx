@@ -271,9 +271,12 @@ const MobileChart = () => {
 
   return (
     <div style={{ 
-      backgroundColor: isDark ? '#000' : '#f5f5f7', 
-      overflowY: 'auto',
-      WebkitOverflowScrolling: 'touch'
+      display: 'flex',
+      flexDirection: 'column',
+      flex: 1,
+      height: '100%',
+      backgroundColor: isDark ? '#000' : '#f5f5f7',
+      overflow: 'hidden'
     }}>
       {/* Chart Tabs */}
       <div 
@@ -312,18 +315,29 @@ const MobileChart = () => {
         </button>
       </div>
 
-      {/* Chart Area - Limited height (65% of viewport) */}
-      <div style={{ height: '65vh', minHeight: '300px', maxHeight: '500px' }}>
+      {/* Chart Area - Fixed height, does not grow */}
+      <div style={{ 
+        height: '40%', 
+        minHeight: '200px', 
+        maxHeight: '350px',
+        flexShrink: 0,
+        flexGrow: 0
+      }}>
         <TradingChart symbol={selectedSymbol} />
       </div>
 
-      {/* Buy/Sell Panel - Normal flow, scroll to reach */}
+      {/* Buy/Sell Panel - Scrollable container, takes remaining space */}
       <div 
         style={{ 
+          flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
           backgroundColor: isDark ? '#0a0a0a' : '#fff', 
           borderTop: `1px solid ${isDark ? '#1a1a1a' : '#e5e5ea'}`,
           padding: '10px 12px',
-          paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))'
+          paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))'
         }}
       >
         {/* Market/Pending Toggle */}

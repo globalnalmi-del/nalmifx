@@ -86,9 +86,10 @@ const MobileTrade = ({ onBack }) => {
         className="flex-1"
         style={{ 
           paddingBottom: '70px',
-          overflow: 'auto',
+          overflow: 'hidden',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          minHeight: 0
         }}
       >
         {renderContent()}
