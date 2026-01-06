@@ -100,8 +100,48 @@ const TradingChart = ({ symbol }) => {
       'USOIL': 'TVC:USOIL',
       'UKOIL': 'TVC:UKOIL',
       'XNGUSD': 'TVC:NATURALGAS',
+      // US Stocks
+      'AAPL.US': 'NASDAQ:AAPL',
+      'MSFT.US': 'NASDAQ:MSFT',
+      'GOOGL.US': 'NASDAQ:GOOGL',
+      'GOOG.US': 'NASDAQ:GOOG',
+      'AMZN.US': 'NASDAQ:AMZN',
+      'TSLA.US': 'NASDAQ:TSLA',
+      'NVDA.US': 'NASDAQ:NVDA',
+      'META.US': 'NASDAQ:META',
+      'NFLX.US': 'NASDAQ:NFLX',
+      'AMD.US': 'NASDAQ:AMD',
+      'INTC.US': 'NASDAQ:INTC',
+      'PYPL.US': 'NASDAQ:PYPL',
+      'COIN.US': 'NASDAQ:COIN',
+      'UBER.US': 'NYSE:UBER',
+      'ABNB.US': 'NASDAQ:ABNB',
+      'SQ.US': 'NYSE:SQ',
+      'JPM.US': 'NYSE:JPM',
+      'V.US': 'NYSE:V',
+      'MA.US': 'NYSE:MA',
+      'HD.US': 'NYSE:HD',
+      'KO.US': 'NYSE:KO',
+      'PEP.US': 'NASDAQ:PEP',
+      'DIS.US': 'NYSE:DIS',
+      'NKE.US': 'NYSE:NKE',
+      'BA.US': 'NYSE:BA',
+      'SBUX.US': 'NASDAQ:SBUX',
     }
-    return symbolMap[sym] || `FX:${sym}`
+    
+    // Check direct mapping first
+    if (symbolMap[sym]) {
+      return symbolMap[sym]
+    }
+    
+    // Handle US stocks with .US suffix
+    if (sym.endsWith('.US')) {
+      const ticker = sym.replace('.US', '')
+      return `NASDAQ:${ticker}`
+    }
+    
+    // Default to FX for forex pairs
+    return `FX:${sym}`
   }
 
   // Handle resize for responsive chart
