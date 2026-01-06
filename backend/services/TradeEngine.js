@@ -422,9 +422,14 @@ class TradeEngine {
     
     switch (orderType) {
       case 'buy_limit':
+      case 'limit':
         // BUY LIMIT: Trigger price must be BELOW current ASK (buy cheaper)
-        if (targetPrice >= currentAsk) {
+        if (type === 'buy' && targetPrice >= currentAsk) {
           throw new Error(`BUY LIMIT price (${targetPrice}) must be below current ASK price (${currentAsk.toFixed(5)}). Use Market Order to buy at current price.`);
+        }
+        // SELL LIMIT: Trigger price must be ABOVE current BID (sell higher)
+        if (type === 'sell' && targetPrice <= currentBid) {
+          throw new Error(`SELL LIMIT price (${targetPrice}) must be above current BID price (${currentBid.toFixed(5)}). Use Market Order to sell at current price.`);
         }
         break;
       case 'sell_limit':
@@ -434,9 +439,14 @@ class TradeEngine {
         }
         break;
       case 'buy_stop':
+      case 'stop':
         // BUY STOP: Trigger price must be ABOVE current ASK (buy on breakout)
-        if (targetPrice <= currentAsk) {
+        if (type === 'buy' && targetPrice <= currentAsk) {
           throw new Error(`BUY STOP price (${targetPrice}) must be above current ASK price (${currentAsk.toFixed(5)}). Use Market Order or BUY LIMIT.`);
+        }
+        // SELL STOP: Trigger price must be BELOW current BID (sell on breakdown)
+        if (type === 'sell' && targetPrice >= currentBid) {
+          throw new Error(`SELL STOP price (${targetPrice}) must be below current BID price (${currentBid.toFixed(5)}). Use Market Order or SELL LIMIT.`);
         }
         break;
       case 'sell_stop':
