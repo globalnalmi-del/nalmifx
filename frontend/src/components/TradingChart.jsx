@@ -237,11 +237,12 @@ const TradingChart = ({ symbol }) => {
   return (
     <div 
       ref={containerRef}
-      className="w-full h-full min-h-[300px] md:min-h-[400px]"
+      className="w-full h-full"
       style={{ 
         backgroundColor: isDark ? '#000000' : '#ffffff',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        zIndex: 1
       }}
     />
   )

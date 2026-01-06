@@ -382,7 +382,7 @@ function App({ initialView = 'home' }) {
   // Fullscreen Trade Room - When activeView is 'chart'
   if (activeView === 'chart') {
     return (
-      <div className="h-screen w-screen flex overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="h-screen w-screen flex" style={{ backgroundColor: 'var(--bg-primary)', overflow: 'hidden' }}>
         {/* Trade Notifications */}
         <TradeNotifications />
         
@@ -468,7 +468,7 @@ function App({ initialView = 'home' }) {
         )}
         
         {/* Main Trading Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col" style={{ minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
           {/* Top Account Bar */}
           <div 
             className="min-h-[40px] flex items-center justify-between px-2 md:px-4 flex-shrink-0 flex-wrap gap-2 py-1"
@@ -585,9 +585,9 @@ function App({ initialView = 'home' }) {
           </div>
           
           {/* Chart Area */}
-          <div className="flex-1 flex min-h-[200px]">
+          <div className="flex-1 flex" style={{ minHeight: 0 }}>
             {/* Main Chart */}
-            <div className="flex-1 relative">
+            <div className="flex-1" style={{ position: 'relative', minHeight: 0, zIndex: 1 }}>
               <TradingChart symbol={selectedSymbol} />
             </div>
           </div>
@@ -667,7 +667,7 @@ function App({ initialView = 'home' }) {
         {showOrderPanel && (
           <div 
             className="w-80 flex-shrink-0 flex flex-col"
-            style={{ backgroundColor: 'var(--bg-secondary)', borderLeft: '1px solid var(--border-color)', maxHeight: '100%' }}
+            style={{ backgroundColor: 'var(--bg-secondary)', borderLeft: '1px solid var(--border-color)', height: '100%', zIndex: 10 }}
           >
             <OrderPanel 
               symbol={selectedSymbol}
