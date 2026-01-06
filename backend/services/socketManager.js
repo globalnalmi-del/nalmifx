@@ -238,30 +238,36 @@ class SocketManager {
    */
   async subscribeDefaultSymbols() {
     const symbols = [
-      // Major Forex pairs (AllTick supported)
+      // Major Forex pairs
       'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF',
       'AUDUSD', 'NZDUSD', 'USDCAD',
-      // Cross pairs (AllTick supported)
+      // Cross pairs
       'EURGBP', 'EURJPY', 'GBPJPY', 'EURCHF',
       'AUDCAD', 'AUDCHF', 'AUDJPY', 'AUDNZD', 'AUDDKK',
       'CADCHF', 'CADJPY', 'CHFJPY',
       'EURAUD', 'EURCAD', 'EURNZD',
       'GBPAUD', 'GBPCAD', 'GBPCHF', 'GBPNZD',
       'NZDCAD', 'NZDJPY',
-      // Exotic pairs (AllTick supported)
-      'USDCNH', 'USDHKD', 'USDSGD', 'USDTHB', 'USDKRW',
-      // Metals (AllTick supported)
-      'XAUUSD', 'XAUEUR', 'XAUAUD', 'XAUCNH', 'XAUSGD',
+      // Exotic pairs
+      'USDCNH', 'USDHKD', 'USDSGD', 'USDTHB', 'USDVND', 'USDKRW',
+      'EURKRW', 'JPYKRW', 'CNYKRW', 'GBPKRW', 'AUDKRW', 'CADKRW',
+      'NZDKRW', 'CHFKRW', 'SGDKRW', 'THBKRW', 'INRKRW',
+      // Metals
+      'XAUUSD', 'XAGUSD', 'XAUEUR', 'XAUAUD', 'XAUCNH', 'XAUSGD',
       'XAGEUR', 'XAGSGD',
-      // Crypto (AllTick supported - USDT pairs)
+      // Crypto (USDT pairs)
       'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT',
       'DOGEUSDT', 'ADAUSDT', 'AVAXUSDT', 'DOTUSDT', 'LINKUSDT',
       'LTCUSDT', 'MATICUSDT', 'SHIBUSDT', 'TRXUSDT', 'ATOMUSDT',
       'UNIUSDT', 'NEARUSDT', 'APTUSDT', 'ARBUSDT', 'OPUSDT',
       'INJUSDT', 'PEPEUSDT', 'SUIUSDT', 'TONUSDT',
-      // US Stocks (AllTick supported)
+      'BONKUSDT', 'FLOKIUSDT', 'WIFUSDT', 'FETUSDT', 'RENDERUSDT',
+      // US Stocks
       'AAPL.US', 'MSFT.US', 'GOOG.US', 'AMZN.US', 'NVDA.US',
-      'TSLA.US', 'META.US', 'NFLX.US', 'AMD.US'
+      'TSLA.US', 'META.US', 'NFLX.US', 'AMD.US',
+      'JPM.US', 'V.US', 'MA.US', 'HD.US', 'KO.US', 'PEP.US',
+      'DIS.US', 'INTC.US', 'NKE.US', 'BA.US', 'SBUX.US',
+      'UBER.US', 'ABNB.US', 'COIN.US', 'PYPL.US', 'SQ.US'
     ];
 
     console.log(`[SocketManager] Subscribing to ${symbols.length} symbols via AllTick...`);
