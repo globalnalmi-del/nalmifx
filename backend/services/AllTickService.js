@@ -133,8 +133,8 @@ class AllTickService extends EventEmitter {
         if (response.data.ret === 200 && response.data.data && response.data.data.tick_list) {
           response.data.data.tick_list.forEach(tick => {
             if (tick.code && tick.price) {
-              // Convert back to USD format for consistency
-              const symbolUsd = tick.code.replace('USDT', 'USD');
+              // Keep symbol as-is (BTCUSDT stays BTCUSDT, EURUSD stays EURUSD)
+              const symbol = tick.code;
               const price = parseFloat(tick.price);
               
               // Calculate realistic bid/ask spread
@@ -143,7 +143,7 @@ class AllTickService extends EventEmitter {
               const ask = price + spread / 2;
 
               const priceData = {
-                symbol: symbolUsd,
+                symbol: symbol,
                 bid: bid,
                 ask: ask,
                 price: price,
@@ -151,11 +151,11 @@ class AllTickService extends EventEmitter {
               };
 
               // Store price
-              this.prices[symbolUsd] = priceData;
+              this.prices[symbol] = priceData;
 
               // Emit tick event
               this.emit('tick', {
-                symbol: symbolUsd,
+                symbol: symbol,
                 bid: bid,
                 ask: ask,
                 timestamp: priceData.timestamp
@@ -163,7 +163,7 @@ class AllTickService extends EventEmitter {
 
               // Log first few prices
               if (Object.keys(this.prices).length <= 4) {
-                console.log(`[AllTick] ${symbolUsd}: $${bid.toFixed(2)}/$${ask.toFixed(2)}`);
+                console.log(`[AllTick] ${symbol}: $${bid.toFixed(2)}/$${ask.toFixed(2)}`);
               }
             }
           });
