@@ -396,7 +396,7 @@ router.post('/resend-otp', [
 // @route   PUT /api/auth/change-password
 // @desc    Change password for logged-in user
 // @access  Private
-router.put('/change-password', auth, [
+router.put('/change-password', protect, [
   body('currentPassword').notEmpty().withMessage('Current password is required'),
   body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
 ], async (req, res) => {
