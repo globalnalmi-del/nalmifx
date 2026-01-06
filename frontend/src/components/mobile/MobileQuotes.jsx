@@ -72,7 +72,12 @@ const MobileQuotes = ({ onOpenChart, onGoHome }) => {
   const handleSymbolClick = (symbol) => {
     setSelectedSymbol(symbol)
     localStorage.setItem('selectedSymbol', symbol)
-    setShowTradePopup(true)
+    // Open chart with the selected symbol instead of popup
+    if (onOpenChart) {
+      onOpenChart(symbol)
+    } else {
+      setShowTradePopup(true)
+    }
   }
 
   // Fetch account data for leverage

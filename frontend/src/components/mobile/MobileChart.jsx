@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { X, Plus, Menu } from 'lucide-react'
+import { X, Plus, Minus, ChevronDown } from 'lucide-react'
 import axios from 'axios'
 import TradingChart from '../TradingChart'
 import { useTheme } from '../../context/ThemeContext'
 
 // Lot size presets for quick selection
 const LOT_PRESETS = [0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
+const LEVERAGE_OPTIONS = [30, 50, 100, 200, 400, 500, 600, 800, 1000]
 
 const MobileChart = () => {
   const { isDark } = useTheme()
@@ -25,8 +26,16 @@ const MobileChart = () => {
   })
   const [loading, setLoading] = useState(false)
   const [showSymbolPicker, setShowSymbolPicker] = useState(false)
-  const [showLotPicker, setShowLotPicker] = useState(false)
+  const [showTradingPanel, setShowTradingPanel] = useState(false)
   const [instruments, setInstruments] = useState([])
+  
+  // Trading panel state
+  const [selectedLeverage, setSelectedLeverage] = useState(100)
+  const [maxLeverage, setMaxLeverage] = useState(1000)
+  const [showStopLoss, setShowStopLoss] = useState(false)
+  const [showTakeProfit, setShowTakeProfit] = useState(false)
+  const [stopLoss, setStopLoss] = useState('')
+  const [takeProfit, setTakeProfit] = useState('')
 
   const activeTab = chartTabs.find(t => t.id === activeTabId) || chartTabs[0]
   const selectedSymbol = activeTab?.symbol || 'XAUUSD'
@@ -55,9 +64,35 @@ const MobileChart = () => {
   useEffect(() => {
     fetchPrices()
     fetchInstruments()
+    fetchAccountData()
     const interval = setInterval(fetchPrices, 1000)
     return () => clearInterval(interval)
   }, [])
+
+  // Fetch account data for leverage
+  const fetchAccountData = async () => {
+    const savedAccount = localStorage.getItem('activeTradingAccount')
+    if (savedAccount) {
+      try {
+        const token = localStorage.getItem('token')
+        const accountData = JSON.parse(savedAccount)
+        const res = await axios.get(`/api/trading-accounts/${accountData._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (res.data.success && res.data.data) {
+          setMaxLeverage(res.data.data.leverage || 1000)
+        }
+      } catch (err) {}
+    }
+  }
+
+  // Adjust volume
+  const adjustVolume = (delta) => {
+    const newVol = Math.max(0.01, Math.round((quickLots + delta) * 100) / 100)
+    setQuickLots(newVol)
+    setLotInputValue(newVol.toString())
+    localStorage.setItem('lastLotSize', newVol.toString())
+  }
 
   const fetchPrices = async () => {
     try {
@@ -140,18 +175,33 @@ const MobileChart = () => {
         return
       }
 
-      const res = await axios.post('/api/trades', {
+      const tradeData = {
         symbol: selectedSymbol,
         type,
         amount: quickLots,
         orderType: 'market',
-        tradingAccountId: activeAccount._id
-      }, {
+        tradingAccountId: activeAccount._id,
+        leverage: selectedLeverage
+      }
+      
+      // Add SL/TP if enabled
+      if (showStopLoss && stopLoss) {
+        tradeData.stopLoss = parseFloat(stopLoss)
+      }
+      if (showTakeProfit && takeProfit) {
+        tradeData.takeProfit = parseFloat(takeProfit)
+      }
+
+      const res = await axios.post('/api/trades', tradeData, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
       if (res.data.success) {
         window.dispatchEvent(new Event('tradeCreated'))
+        setShowTradingPanel(false)
+        // Reset SL/TP
+        setStopLoss('')
+        setTakeProfit('')
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Trade failed')
@@ -192,7 +242,7 @@ const MobileChart = () => {
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
-      paddingBottom: '60px'
+      paddingBottom: '80px'
     }}>
       {/* Chart Tabs */}
       <div 
@@ -232,12 +282,12 @@ const MobileChart = () => {
         </button>
       </div>
 
-      {/* Chart Area - takes remaining space minus buy/sell bar */}
+      {/* Chart Area - takes remaining space */}
       <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <TradingChart symbol={selectedSymbol} />
       </div>
 
-      {/* Buy/Sell Panel - Fixed at bottom above navigation */}
+      {/* Buy/Sell Panel - Fixed at bottom with 80px padding above nav */}
       <div 
         style={{ 
           position: 'absolute',
@@ -246,92 +296,195 @@ const MobileChart = () => {
           right: 0,
           backgroundColor: isDark ? '#0a0a0a' : '#fff', 
           borderTop: `1px solid ${isDark ? '#1a1a1a' : '#e5e5ea'}`,
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 12px',
+          padding: '10px 12px',
           zIndex: 100
         }}
       >
-        <button
-          onClick={() => handleTrade('sell')}
-          disabled={loading}
-          style={{ 
-            flex: 1,
-            padding: '10px 16px',
-            borderRadius: '9999px',
-            backgroundColor: '#ef4444',
-            color: '#ffffff',
-            fontWeight: '600',
-            fontSize: '14px',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            opacity: loading ? 0.5 : 1,
-            WebkitAppearance: 'none',
-            appearance: 'none'
-          }}
-        >
-          <span>SELL</span>
-          <span style={{ fontSize: '12px', opacity: 0.8 }}>{formatPrice(price.bid, selectedSymbol)}</span>
-        </button>
-        
-        {/* Enhanced Lot Size Selector */}
-        <button
-          onClick={() => setShowLotPicker(true)}
-          style={{ 
-            padding: '8px 12px',
-            borderRadius: '9999px',
-            backgroundColor: isDark ? '#1a1a1a' : '#e5e5ea', 
-            color: isDark ? '#fff' : '#000', 
-            minWidth: '70px',
-            fontWeight: '700',
-            fontSize: '14px',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '4px',
-            WebkitAppearance: 'none',
-            appearance: 'none'
-          }}
-        >
-          <span>{quickLots}</span>
-          <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-            <path d="M1 1L5 5L9 1" stroke={isDark ? '#9ca3af' : '#6b7280'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        
-        <button
-          onClick={() => handleTrade('buy')}
-          disabled={loading}
-          style={{ 
-            flex: 1,
-            padding: '10px 16px',
-            borderRadius: '9999px',
-            backgroundColor: '#3b82f6',
-            color: '#ffffff',
-            fontWeight: '600',
-            fontSize: '14px',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            opacity: loading ? 0.5 : 1,
-            WebkitAppearance: 'none',
-            appearance: 'none'
-          }}
-        >
-          <span>BUY</span>
-          <span style={{ fontSize: '12px', opacity: 0.8 }}>{formatPrice(price.ask, selectedSymbol)}</span>
-        </button>
+        {/* Trading Options Row */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          marginBottom: '10px',
+          gap: '8px'
+        }}>
+          {/* Volume */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <button
+              onClick={() => adjustVolume(-0.01)}
+              style={{ 
+                width: '28px', height: '28px', borderRadius: '6px',
+                backgroundColor: isDark ? '#2c2c2e' : '#e5e5ea',
+                border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >
+              <Minus size={14} color={isDark ? '#fff' : '#000'} />
+            </button>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={lotInputValue}
+              onChange={(e) => {
+                const value = e.target.value
+                if (value === '' || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                  setLotInputValue(value)
+                  const numVal = parseFloat(value)
+                  if (!isNaN(numVal) && numVal > 0) {
+                    setQuickLots(numVal)
+                    localStorage.setItem('lastLotSize', numVal.toString())
+                  }
+                }
+              }}
+              style={{ 
+                width: '60px', height: '28px', textAlign: 'center',
+                fontSize: '13px', fontWeight: '600', borderRadius: '6px',
+                backgroundColor: isDark ? '#1a1a1a' : '#f2f2f7',
+                color: isDark ? '#fff' : '#000', border: 'none'
+              }}
+            />
+            <button
+              onClick={() => adjustVolume(0.01)}
+              style={{ 
+                width: '28px', height: '28px', borderRadius: '6px',
+                backgroundColor: isDark ? '#2c2c2e' : '#e5e5ea',
+                border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >
+              <Plus size={14} color={isDark ? '#fff' : '#000'} />
+            </button>
+          </div>
+
+          {/* Leverage */}
+          <select
+            value={selectedLeverage}
+            onChange={(e) => setSelectedLeverage(Number(e.target.value))}
+            style={{ 
+              padding: '4px 8px', borderRadius: '6px', fontSize: '12px',
+              backgroundColor: isDark ? '#1a1a1a' : '#f2f2f7',
+              color: isDark ? '#fff' : '#000', border: 'none',
+              minWidth: '70px'
+            }}
+          >
+            {LEVERAGE_OPTIONS.filter(l => l <= maxLeverage).map(lev => (
+              <option key={lev} value={lev}>1:{lev}</option>
+            ))}
+          </select>
+
+          {/* SL Toggle */}
+          <button
+            onClick={() => setShowStopLoss(!showStopLoss)}
+            style={{ 
+              padding: '4px 8px', borderRadius: '6px', fontSize: '11px',
+              backgroundColor: showStopLoss ? '#ef4444' : (isDark ? '#2c2c2e' : '#e5e5ea'),
+              color: showStopLoss ? '#fff' : (isDark ? '#9ca3af' : '#6b7280'),
+              border: 'none', cursor: 'pointer'
+            }}
+          >
+            SL
+          </button>
+
+          {/* TP Toggle */}
+          <button
+            onClick={() => setShowTakeProfit(!showTakeProfit)}
+            style={{ 
+              padding: '4px 8px', borderRadius: '6px', fontSize: '11px',
+              backgroundColor: showTakeProfit ? '#22c55e' : (isDark ? '#2c2c2e' : '#e5e5ea'),
+              color: showTakeProfit ? '#fff' : (isDark ? '#9ca3af' : '#6b7280'),
+              border: 'none', cursor: 'pointer'
+            }}
+          >
+            TP
+          </button>
+        </div>
+
+        {/* SL/TP Inputs Row */}
+        {(showStopLoss || showTakeProfit) && (
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+            {showStopLoss && (
+              <input
+                type="number"
+                value={stopLoss}
+                onChange={(e) => setStopLoss(e.target.value)}
+                placeholder="Stop Loss"
+                style={{ 
+                  flex: 1, padding: '8px', borderRadius: '6px', fontSize: '12px',
+                  backgroundColor: isDark ? '#1a1a1a' : '#f2f2f7',
+                  color: isDark ? '#fff' : '#000', border: `1px solid ${isDark ? '#333' : '#e5e5ea'}`
+                }}
+              />
+            )}
+            {showTakeProfit && (
+              <input
+                type="number"
+                value={takeProfit}
+                onChange={(e) => setTakeProfit(e.target.value)}
+                placeholder="Take Profit"
+                style={{ 
+                  flex: 1, padding: '8px', borderRadius: '6px', fontSize: '12px',
+                  backgroundColor: isDark ? '#1a1a1a' : '#f2f2f7',
+                  color: isDark ? '#fff' : '#000', border: `1px solid ${isDark ? '#333' : '#e5e5ea'}`
+                }}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Buy/Sell Buttons */}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => handleTrade('sell')}
+            disabled={loading}
+            style={{ 
+              flex: 1,
+              padding: '12px 16px',
+              borderRadius: '9999px',
+              backgroundColor: '#ef4444',
+              color: '#ffffff',
+              fontWeight: '600',
+              fontSize: '14px',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              opacity: loading ? 0.5 : 1,
+              WebkitAppearance: 'none',
+              appearance: 'none'
+            }}
+          >
+            <span>SELL</span>
+            <span style={{ fontSize: '12px', opacity: 0.8 }}>{formatPrice(price.bid, selectedSymbol)}</span>
+          </button>
+          
+          <button
+            onClick={() => handleTrade('buy')}
+            disabled={loading}
+            style={{ 
+              flex: 1,
+              padding: '12px 16px',
+              borderRadius: '9999px',
+              backgroundColor: '#3b82f6',
+              color: '#ffffff',
+              fontWeight: '600',
+              fontSize: '14px',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              opacity: loading ? 0.5 : 1,
+              WebkitAppearance: 'none',
+              appearance: 'none'
+            }}
+          >
+            <span>BUY</span>
+            <span style={{ fontSize: '12px', opacity: 0.8 }}>{formatPrice(price.ask, selectedSymbol)}</span>
+          </button>
+        </div>
       </div>
 
       {/* Lot Size Picker Modal */}
