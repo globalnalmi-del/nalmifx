@@ -186,11 +186,22 @@ const MobileChart = () => {
   }, {})
 
   return (
-    <div className="flex flex-col" style={{ backgroundColor: isDark ? '#000' : '#f5f5f7', height: '100%', minHeight: '100%', position: 'relative' }}>
+    <div style={{ 
+      backgroundColor: isDark ? '#000' : '#f5f5f7', 
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      paddingBottom: '60px'
+    }}>
       {/* Chart Tabs */}
       <div 
         className="flex items-center px-2 py-2 overflow-x-auto" 
-        style={{ backgroundColor: isDark ? '#0a0a0a' : '#fff', borderBottom: `1px solid ${isDark ? '#1a1a1a' : '#e5e5ea'}` }}
+        style={{ 
+          backgroundColor: isDark ? '#0a0a0a' : '#fff', 
+          borderBottom: `1px solid ${isDark ? '#1a1a1a' : '#e5e5ea'}`,
+          flexShrink: 0
+        }}
       >
         {chartTabs.map(tab => (
           <div
@@ -221,24 +232,26 @@ const MobileChart = () => {
         </button>
       </div>
 
-      {/* Full Screen Chart */}
-      <div className="flex-1 relative min-h-0" style={{ minHeight: '250px' }}>
+      {/* Chart Area - takes remaining space minus buy/sell bar */}
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <TradingChart symbol={selectedSymbol} />
       </div>
 
-      {/* Slim Buy/Sell Panel at Bottom - Fixed position to ensure visibility */}
+      {/* Buy/Sell Panel - Fixed at bottom above navigation */}
       <div 
         style={{ 
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
           backgroundColor: isDark ? '#0a0a0a' : '#fff', 
           borderTop: `1px solid ${isDark ? '#1a1a1a' : '#e5e5ea'}`,
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
           gap: '8px',
-          padding: '10px 12px',
-          paddingBottom: '14px',
-          flexShrink: 0,
-          minHeight: '56px'
+          padding: '8px 12px',
+          zIndex: 100
         }}
       >
         <button
