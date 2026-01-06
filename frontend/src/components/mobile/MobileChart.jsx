@@ -164,8 +164,14 @@ const MobileChart = () => {
   
   // Categorize instruments
   const getCategory = (symbol) => {
-    if (symbol.includes('BTC') || symbol.includes('ETH') || symbol.includes('LTC') || symbol.includes('XRP') || symbol.includes('DOGE') || symbol.includes('SOL')) return 'Crypto'
+    // Crypto symbols (including USDT pairs)
+    const cryptoSymbols = ['BTC', 'ETH', 'LTC', 'XRP', 'DOGE', 'SOL', 'BNB', 'ADA', 'AVAX', 'DOT', 
+                          'LINK', 'SHIB', 'TRX', 'ATOM', 'UNI', 'NEAR', 'APT', 'ARB', 'OP', 
+                          'INJ', 'PEPE', 'SUI', 'TON', 'BONK', 'FLOKI', 'XLM']
+    if (cryptoSymbols.some(c => symbol.includes(c))) return 'Crypto'
     if (symbol.includes('XAU') || symbol.includes('XAG')) return 'Metals'
+    if (symbol.includes('KRW') || symbol.includes('CNH') || symbol.includes('HKD') || 
+        symbol.includes('SGD') || symbol.includes('THB')) return 'Exotic'
     return 'Forex'
   }
 
