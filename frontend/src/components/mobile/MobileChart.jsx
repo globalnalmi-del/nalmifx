@@ -242,7 +242,7 @@ const MobileChart = () => {
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
-      paddingBottom: '150px'
+      paddingBottom: '0'
     }}>
       {/* Chart Tabs */}
       <div 
@@ -287,17 +287,14 @@ const MobileChart = () => {
         <TradingChart symbol={selectedSymbol} />
       </div>
 
-      {/* Buy/Sell Panel - Fixed at bottom with 80px padding above nav */}
+      {/* Buy/Sell Panel - Static at bottom, not absolute */}
       <div 
         style={{ 
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
           backgroundColor: isDark ? '#0a0a0a' : '#fff', 
           borderTop: `1px solid ${isDark ? '#1a1a1a' : '#e5e5ea'}`,
           padding: '10px 12px',
-          zIndex: 100
+          paddingBottom: '12px',
+          flexShrink: 0
         }}
       >
         {/* Trading Options Row */}
