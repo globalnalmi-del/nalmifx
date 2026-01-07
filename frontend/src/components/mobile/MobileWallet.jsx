@@ -448,21 +448,33 @@ const MobileWallet = () => {
           <div className="space-y-2">
             {transactions.length === 0 ? (
               <p className="text-center py-8 text-sm" style={{ color: textSecondary }}>No transactions yet</p>
-            ) : transactions.map(tx => (
-              <div key={tx._id} className="p-3 rounded-lg" style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}` }}>
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    {tx.type === 'deposit' ? <ArrowDownCircle size={16} color="#22c55e" /> : <ArrowUpCircle size={16} color="#ef4444" />}
-                    <span className="text-sm capitalize" style={{ color: textPrimary }}>{tx.type}</span>
+            ) : transactions.map(tx => {
+              const isCredit = tx.type === 'deposit' || tx.type === 'admin_credit' || tx.type === 'bonus' || tx.type === 'referral' || tx.type === 'trade_profit' || tx.type === 'transfer_in'
+              const getDisplayType = () => {
+                if (tx.type === 'admin_credit') return 'Credit from Admin'
+                if (tx.type === 'admin_debit') return 'Debit from Admin'
+                if (tx.type === 'transfer_in') return 'Transfer In'
+                if (tx.type === 'transfer_out') return 'Transfer Out'
+                if (tx.type === 'trade_profit') return 'Trade Profit'
+                if (tx.type === 'trade_loss') return 'Trade Loss'
+                return tx.type
+              }
+              return (
+                <div key={tx._id} className="p-3 rounded-lg" style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}` }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      {isCredit ? <ArrowDownCircle size={16} color="#22c55e" /> : <ArrowUpCircle size={16} color="#ef4444" />}
+                      <span className="text-sm capitalize" style={{ color: textPrimary }}>{getDisplayType()}</span>
+                    </div>
+                    <span className="text-xs px-2 py-0.5 rounded capitalize" style={{ backgroundColor: `${getStatusColor(tx.status)}20`, color: getStatusColor(tx.status) }}>{tx.status}</span>
                   </div>
-                  <span className="text-xs px-2 py-0.5 rounded capitalize" style={{ backgroundColor: `${getStatusColor(tx.status)}20`, color: getStatusColor(tx.status) }}>{tx.status}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium" style={{ color: isCredit ? '#22c55e' : '#ef4444' }}>{isCredit ? '+' : '-'}${Math.abs(tx.amount)?.toFixed(2)}</span>
+                    <span className="text-xs" style={{ color: textSecondary }}>{tx.description || new Date(tx.createdAt).toLocaleDateString()}</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium" style={{ color: tx.type === 'deposit' ? '#22c55e' : '#ef4444' }}>{tx.type === 'deposit' ? '+' : '-'}${tx.amount?.toFixed(2)}</span>
-                  <span className="text-xs" style={{ color: textSecondary }}>{new Date(tx.createdAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

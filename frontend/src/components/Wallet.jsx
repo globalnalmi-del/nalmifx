@@ -791,20 +791,39 @@ const Wallet = () => {
               <div className="space-y-3">
                 {transactions.map((tx) => {
                   const statusStyle = getStatusColor(tx.status)
+                  const isCredit = tx.type === 'deposit' || tx.type === 'admin_credit' || tx.type === 'bonus' || tx.type === 'referral' || tx.type === 'trade_profit' || tx.type === 'transfer_in'
+                  const isAdminAction = tx.type === 'admin_credit' || tx.type === 'admin_debit'
+                  
+                  // Format display type
+                  const getDisplayType = () => {
+                    if (tx.type === 'admin_credit') return 'Credit from Admin'
+                    if (tx.type === 'admin_debit') return 'Debit from Admin'
+                    if (tx.type === 'transfer_in') return 'Transfer In'
+                    if (tx.type === 'transfer_out') return 'Transfer Out'
+                    if (tx.type === 'trade_profit') return 'Trade Profit'
+                    if (tx.type === 'trade_loss') return 'Trade Loss'
+                    return tx.type
+                  }
+                  
                   return (
                     <div key={tx._id} className="flex items-center justify-between p-4 rounded-xl" style={{ backgroundColor: 'var(--bg-hover)' }}>
                       <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'deposit' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                          {tx.type === 'deposit' ? <ArrowDownCircle size={20} style={{ color: '#22c55e' }} /> : <ArrowUpCircle size={20} style={{ color: '#ef4444' }} />}
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isCredit ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
+                          {isCredit ? <ArrowDownCircle size={20} style={{ color: '#22c55e' }} /> : <ArrowUpCircle size={20} style={{ color: '#ef4444' }} />}
                         </div>
                         <div>
-                          <p className="font-medium capitalize" style={{ color: 'var(--text-primary)' }}>{tx.type}</p>
-                          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{new Date(tx.createdAt).toLocaleString()}</p>
+                          <p className="font-medium capitalize" style={{ color: 'var(--text-primary)' }}>{getDisplayType()}</p>
+                          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                            {tx.description || new Date(tx.createdAt).toLocaleString()}
+                          </p>
+                          {isAdminAction && (
+                            <p className="text-xs" style={{ color: '#3b82f6' }}>Admin Action</p>
+                          )}
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold" style={{ color: tx.type === 'deposit' ? '#22c55e' : '#ef4444' }}>
-                          {tx.type === 'deposit' ? '+' : '-'}${tx.amount.toLocaleString()}
+                        <p className="font-semibold" style={{ color: isCredit ? '#22c55e' : '#ef4444' }}>
+                          {isCredit ? '+' : '-'}${Math.abs(tx.amount).toLocaleString()}
                         </p>
                         <span className="text-xs px-2 py-1 rounded-full capitalize" style={{ backgroundColor: statusStyle.bg, color: statusStyle.color }}>
                           {tx.status}
