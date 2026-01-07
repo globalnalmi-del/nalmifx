@@ -98,6 +98,72 @@ router.post('/register', [
   }
 });
 
+// @route   POST /api/auth/demo-login
+// @desc    Demo login for local development - bypasses OTP verification
+// @access  Public (only works in development mode)
+router.post('/demo-login', async (req, res) => {
+  try {
+    // Only allow in development mode
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({
+        success: false,
+        message: 'Demo login is not available in production'
+      });
+    }
+
+    // Find or create demo user
+    let demoUser = await User.findOne({ email: 'demo@nalmifx.com' });
+    
+    if (!demoUser) {
+      // Create demo user with verified email
+      demoUser = await User.create({
+        email: 'demo@nalmifx.com',
+        password: 'demo123456',
+        firstName: 'Demo',
+        lastName: 'User',
+        emailVerified: true,
+        isActive: true,
+        balance: 10000
+      });
+      console.log('[Auth] Demo user created');
+    } else if (!demoUser.emailVerified) {
+      // Ensure demo user is verified
+      demoUser.emailVerified = true;
+      await demoUser.save();
+    }
+
+    // Update last login
+    demoUser.lastLogin = new Date();
+    await demoUser.save();
+
+    // Generate token
+    const token = generateToken(demoUser._id);
+
+    res.json({
+      success: true,
+      message: 'Demo login successful',
+      data: {
+        user: {
+          id: demoUser._id,
+          email: demoUser.email,
+          firstName: demoUser.firstName,
+          lastName: demoUser.lastName,
+          role: demoUser.role,
+          balance: demoUser.balance,
+          emailVerified: demoUser.emailVerified
+        },
+        token
+      }
+    });
+  } catch (error) {
+    console.error('Demo login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during demo login'
+    });
+  }
+});
+
 // @route   POST /api/auth/login
 // @desc    Login user
 // @access  Public

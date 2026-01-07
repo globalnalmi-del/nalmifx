@@ -177,6 +177,40 @@ class TradeEngine {
   }
 
   /**
+   * Calculate floating P/L for all open trades of a user/account
+   * This is used for MT5-style equity calculation
+   */
+  async calculateFloatingPnL(userId, tradingAccountId = null) {
+    try {
+      const query = { 
+        user: userId, 
+        status: 'open' 
+      };
+      if (tradingAccountId) {
+        query.tradingAccount = tradingAccountId;
+      }
+      
+      const openTrades = await Trade.find(query);
+      let totalFloatingPnL = 0;
+      
+      for (const trade of openTrades) {
+        const price = this.getPrice(trade.symbol);
+        if (!price) continue;
+        
+        // Get current close price (bid for buy, ask for sell)
+        const currentPrice = trade.type === 'buy' ? price.bid : price.ask;
+        const pnl = this.calculatePnL(trade, currentPrice);
+        totalFloatingPnL += pnl;
+      }
+      
+      return totalFloatingPnL;
+    } catch (error) {
+      console.error('[TradeEngine] Error calculating floating P/L:', error);
+      return 0;
+    }
+  }
+
+  /**
    * Check if market is open for a symbol
    */
   checkMarketHours(symbol) {
@@ -278,9 +312,6 @@ class TradeEngine {
     
     console.log(`[TradeEngine] Leverage: requested=${requestedLeverage}, using=${tradeLeverage}`);
     
-    // TRADING POWER = balance × leverage (this is max position value user can control)
-    const tradingPower = availableBalance * tradeLeverage;
-    
     // Position value = lots × price × contract size
     const contractSize = this.getContractSize(symbol);
     const positionValue = amount * executionPrice * contractSize;
@@ -296,16 +327,35 @@ class TradeEngine {
     // Spread cost for reference (spread is applied to execution price, not deducted separately)
     const spreadCost = this.calculateSpreadCost(symbol, amount, charges.spreadPips);
     
-    // Check if position value is within trading power
-    // User needs: margin + charges to open the trade
+    /**
+     * MT5-Style Margin Check:
+     * - Balance stays unchanged when opening trade
+     * - Margin is LOCKED (reserved) from equity
+     * - Free Margin = Equity - Used Margin
+     * - Trade allowed if Free Margin >= Required Margin + Charges
+     */
+    
+    // Calculate current floating P/L for all open trades
+    const floatingPnL = usesTradingAccount 
+      ? await this.calculateFloatingPnL(userId, tradingAccount._id)
+      : 0;
+    
+    // Calculate equity and free margin
+    const equity = availableBalance + floatingPnL;
+    const currentUsedMargin = usesTradingAccount ? tradingAccount.margin : 0;
+    const freeMargin = equity - currentUsedMargin;
+    
+    // Total required = margin for new trade + commission
     const totalRequired = margin + tradingCharge;
     
-    console.log(`[TradeEngine] Balance: $${availableBalance}, Leverage: ${tradeLeverage}x, Trading Power: $${tradingPower.toFixed(2)}`);
-    console.log(`[TradeEngine] Position Value: $${positionValue.toFixed(2)}, Margin Required: $${margin.toFixed(2)}, Charges: $${tradingCharge.toFixed(2)}`);
+    console.log(`[TradeEngine] MT5-Style Margin Check:`);
+    console.log(`[TradeEngine] Balance: $${availableBalance.toFixed(2)}, Floating P/L: $${floatingPnL.toFixed(2)}`);
+    console.log(`[TradeEngine] Equity: $${equity.toFixed(2)}, Used Margin: $${currentUsedMargin.toFixed(2)}, Free Margin: $${freeMargin.toFixed(2)}`);
+    console.log(`[TradeEngine] Position Value: $${positionValue.toFixed(2)}, Required Margin: $${margin.toFixed(2)}, Charges: $${tradingCharge.toFixed(2)}`);
     
-    // User can trade if they have enough balance to cover margin + charges
-    if (availableBalance < totalRequired) {
-      throw new Error(`Insufficient balance. Required: $${totalRequired.toFixed(2)}, Available: $${availableBalance.toFixed(2)}`);
+    // Check if free margin is enough for new trade
+    if (freeMargin < totalRequired) {
+      throw new Error(`Insufficient free margin. Required: $${totalRequired.toFixed(2)}, Free Margin: $${freeMargin.toFixed(2)}`);
     }
 
     // Validate SL/TP
@@ -359,31 +409,45 @@ class TradeEngine {
 
     console.log(`[TradeEngine] Trade created: ${trade._id}`);
 
-    // Deduct margin from trading account or user balance
+    /**
+     * MT5-Style Trade Opening:
+     * - Balance stays UNCHANGED (only changes on trade close)
+     * - Margin is LOCKED (added to used margin)
+     * - Commission is deducted from balance immediately
+     * - Equity = Balance + Floating P/L (calculated real-time)
+     */
     const balanceBefore = availableBalance;
     if (usesTradingAccount) {
-      tradingAccount.balance -= totalRequired;
-      tradingAccount.margin += margin;
+      // Only deduct commission from balance, NOT margin
+      tradingAccount.balance -= tradingCharge; // Commission only
+      tradingAccount.margin += margin; // Lock margin
       tradingAccount.totalTrades += 1;
+      // Update equity and free margin
+      tradingAccount.equity = tradingAccount.balance + floatingPnL;
+      tradingAccount.freeMargin = tradingAccount.equity - tradingAccount.margin;
       await tradingAccount.save();
+      console.log(`[TradeEngine] MT5-Style: Balance ${balanceBefore.toFixed(2)} -> ${tradingAccount.balance.toFixed(2)} (commission: -$${tradingCharge.toFixed(2)})`);
+      console.log(`[TradeEngine] MT5-Style: Margin locked: $${margin.toFixed(2)}, Total Used Margin: $${tradingAccount.margin.toFixed(2)}`);
     } else {
-      user.balance -= totalRequired;
+      // For user wallet (non-trading account), deduct commission only
+      user.balance -= tradingCharge;
       await user.save();
+      console.log(`[TradeEngine] User wallet: Balance ${balanceBefore.toFixed(2)} -> ${user.balance.toFixed(2)} (commission: -$${tradingCharge.toFixed(2)})`);
     }
-    
-    console.log(`[TradeEngine] Balance deducted. Before: ${balanceBefore}, After: ${usesTradingAccount ? tradingAccount.balance : user.balance}`);
 
-    // Create transaction record with clear breakdown
-    await Transaction.create({
-      user: userId,
-      type: 'margin_deduction',
-      amount: -totalRequired,
-      description: `${type.toUpperCase()} ${amount} lots ${symbol} @ ${executionPrice.toFixed(5)} | Margin: $${margin.toFixed(2)} + Charges: $${tradingCharge.toFixed(2)}`,
-      balanceBefore,
-      balanceAfter: usesTradingAccount ? tradingAccount.balance : user.balance,
-      status: 'completed',
-      reference: `${trade._id}_open_${Date.now()}`
-    });
+    // Create transaction record for commission only
+    if (tradingCharge > 0) {
+      await Transaction.create({
+        user: userId,
+        type: 'trading_commission',
+        amount: -tradingCharge,
+        description: `Commission: ${type.toUpperCase()} ${amount} lots ${symbol} @ ${executionPrice.toFixed(5)}`,
+        balanceBefore,
+        balanceAfter: usesTradingAccount ? tradingAccount.balance : user.balance,
+        status: 'completed',
+        reference: `${trade._id}_commission_${Date.now()}`
+      });
+    }
 
     // Notify user
     this.notifyUser(userId, 'orderExecuted', {
@@ -667,9 +731,20 @@ class TradeEngine {
       const tradingCharge = Math.round(commission * 100) / 100;
       const totalRequired = margin + tradingCharge;
 
-      // Check if user still has enough balance
-      if (availableBalance < totalRequired) {
-        console.log(`[TradeEngine] Pending order cancelled - insufficient balance: ${trade._id}`);
+      /**
+       * MT5-Style Margin Check for Pending Order Activation:
+       * Check Free Margin = Equity - Used Margin
+       */
+      const floatingPnL = usesTradingAccount 
+        ? await this.calculateFloatingPnL(userId, tradingAccount._id)
+        : 0;
+      const equity = availableBalance + floatingPnL;
+      const currentUsedMargin = usesTradingAccount ? tradingAccount.margin : 0;
+      const freeMargin = equity - currentUsedMargin;
+      
+      // Check if free margin is enough (margin + commission)
+      if (freeMargin < totalRequired) {
+        console.log(`[TradeEngine] Pending order cancelled - insufficient free margin: ${trade._id}`);
         trade.status = 'cancelled';
         trade.closeReason = 'margin_call';
         trade.closedAt = new Date();
@@ -677,20 +752,26 @@ class TradeEngine {
         
         this.notifyUser(userId, 'orderCancelled', {
           trade,
-          message: `Pending order cancelled: Insufficient balance. Required: $${totalRequired.toFixed(2)}, Available: $${availableBalance.toFixed(2)}`
+          message: `Pending order cancelled: Insufficient free margin. Required: $${totalRequired.toFixed(2)}, Free Margin: $${freeMargin.toFixed(2)}`
         });
         return;
       }
 
-      // Deduct margin NOW
+      /**
+       * MT5-Style: Lock margin and deduct commission only
+       */
       const balanceBefore = availableBalance;
       if (usesTradingAccount) {
-        tradingAccount.balance -= totalRequired;
-        tradingAccount.margin += margin;
+        // Only deduct commission from balance, NOT margin
+        tradingAccount.balance -= tradingCharge;
+        tradingAccount.margin += margin; // Lock margin
         tradingAccount.totalTrades += 1;
+        // Update equity and free margin
+        tradingAccount.equity = tradingAccount.balance + floatingPnL;
+        tradingAccount.freeMargin = tradingAccount.equity - tradingAccount.margin;
         await tradingAccount.save();
       } else {
-        user.balance -= totalRequired;
+        user.balance -= tradingCharge; // Commission only
         await user.save();
       }
 
@@ -907,7 +988,12 @@ class TradeEngine {
       trade.closeReason = reason;
       await trade.save();
 
-      // Update trading account or user balance
+      /**
+       * MT5-Style Trade Closing:
+       * - Release locked margin (margin was never deducted from balance)
+       * - Add P/L to balance (this is the only balance change)
+       * - Update equity and free margin
+       */
       const user = await User.findById(trade.user);
       let tradingAccount = null;
       if (trade.tradingAccount) {
@@ -915,34 +1001,49 @@ class TradeEngine {
       }
       
       const usesTradingAccount = !!tradingAccount;
-      const marginReturn = trade.margin || ((trade.amount * trade.price) / trade.leverage);
+      const marginToRelease = trade.margin || ((trade.amount * trade.price) / trade.leverage);
       
       if (usesTradingAccount) {
         const balanceBefore = tradingAccount.balance;
-        let newBalance = tradingAccount.balance + marginReturn + pnl;
         
-        // Prevent balance from going negative - cap loss at available balance
+        // MT5-Style: Only add P/L to balance (margin was never deducted)
+        let newBalance = tradingAccount.balance + pnl;
+        
+        // Prevent balance from going negative
         if (newBalance < 0) {
-          console.log(`[TradeEngine] Capping loss to prevent negative balance. Would be: ${newBalance.toFixed(2)}, setting to 0`);
+          console.log(`[TradeEngine] MT5-Style: Capping loss. Would be: ${newBalance.toFixed(2)}, setting to 0`);
           newBalance = 0;
         }
         
         tradingAccount.balance = newBalance;
-        tradingAccount.margin -= trade.margin;
+        
+        // Release the locked margin
+        tradingAccount.margin -= marginToRelease;
         if (tradingAccount.margin < 0) tradingAccount.margin = 0;
+        
+        // Recalculate equity and free margin (no floating PnL after this trade closes)
+        const remainingFloatingPnL = await this.calculateFloatingPnL(trade.user, tradingAccount._id);
+        tradingAccount.equity = tradingAccount.balance + remainingFloatingPnL;
+        tradingAccount.freeMargin = tradingAccount.equity - tradingAccount.margin;
+        
         if (pnl >= 0) {
           tradingAccount.winningTrades += 1;
+          tradingAccount.totalProfit += pnl;
         } else {
           tradingAccount.losingTrades += 1;
+          tradingAccount.totalLoss += Math.abs(pnl);
         }
         await tradingAccount.save();
         
-        // Create transaction record
+        console.log(`[TradeEngine] MT5-Style Close: Balance ${balanceBefore.toFixed(2)} + P/L ${pnl.toFixed(2)} = ${tradingAccount.balance.toFixed(2)}`);
+        console.log(`[TradeEngine] MT5-Style Close: Margin released: $${marginToRelease.toFixed(2)}, Remaining margin: $${tradingAccount.margin.toFixed(2)}`);
+        
+        // Create transaction record for P/L only
         await Transaction.create({
           user: trade.user,
           type: pnl >= 0 ? 'trade_profit' : 'trade_loss',
-          amount: marginReturn + pnl,
-          description: `Closed ${trade.type.toUpperCase()} ${trade.amount} ${trade.symbol} @ ${closePrice} (${reason})`,
+          amount: pnl,
+          description: `Closed ${trade.type.toUpperCase()} ${trade.amount} ${trade.symbol} @ ${closePrice} (${reason}) | P/L: $${pnl.toFixed(2)}`,
           balanceBefore,
           balanceAfter: tradingAccount.balance,
           status: 'completed',
@@ -950,11 +1051,12 @@ class TradeEngine {
         });
       } else if (user) {
         const balanceBefore = user.balance;
-        let newBalance = user.balance + marginReturn + pnl;
         
-        // Prevent balance from going negative - cap loss at available balance
+        // For user wallet: add P/L to balance
+        let newBalance = user.balance + pnl;
+        
         if (newBalance < 0) {
-          console.log(`[TradeEngine] Capping user wallet loss. Would be: ${newBalance.toFixed(2)}, setting to 0`);
+          console.log(`[TradeEngine] MT5-Style: Capping user wallet loss. Would be: ${newBalance.toFixed(2)}, setting to 0`);
           newBalance = 0;
         }
         
@@ -965,8 +1067,8 @@ class TradeEngine {
         await Transaction.create({
           user: trade.user,
           type: pnl >= 0 ? 'trade_profit' : 'trade_loss',
-          amount: marginReturn + pnl,
-          description: `Closed ${trade.type.toUpperCase()} ${trade.amount} ${trade.symbol} @ ${closePrice} (${reason})`,
+          amount: pnl,
+          description: `Closed ${trade.type.toUpperCase()} ${trade.amount} ${trade.symbol} @ ${closePrice} (${reason}) | P/L: $${pnl.toFixed(2)}`,
           balanceBefore,
           balanceAfter: user.balance,
           status: 'completed',

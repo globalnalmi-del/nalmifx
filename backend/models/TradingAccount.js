@@ -128,20 +128,83 @@ tradingAccountSchema.pre('save', async function(next) {
   next();
 });
 
+/**
+ * MT5-Style Account Calculations:
+ * - Balance: Deposited funds (only changes on deposit/withdraw/trade close)
+ * - Equity: Balance + Floating P/L (real-time account value)
+ * - Margin: Amount locked for open positions
+ * - Free Margin: Equity - Margin (available for new trades)
+ * - Margin Level: (Equity / Margin) × 100%
+ */
+
 // Calculate equity (balance + floating P/L)
 tradingAccountSchema.methods.calculateEquity = function(floatingPnL = 0) {
   this.equity = this.balance + floatingPnL;
   return this.equity;
 };
 
-// Calculate margin level
-tradingAccountSchema.methods.calculateMarginLevel = function() {
+// Calculate free margin (equity - used margin)
+tradingAccountSchema.methods.calculateFreeMargin = function(floatingPnL = 0) {
+  const equity = this.balance + floatingPnL;
+  this.freeMargin = equity - this.margin;
+  return this.freeMargin;
+};
+
+// Calculate margin level percentage
+tradingAccountSchema.methods.calculateMarginLevel = function(floatingPnL = 0) {
+  const equity = this.balance + floatingPnL;
   if (this.margin > 0) {
-    this.marginLevel = (this.equity / this.margin) * 100;
+    this.marginLevel = (equity / this.margin) * 100;
   } else {
     this.marginLevel = 0;
   }
   return this.marginLevel;
+};
+
+// Check if account has enough free margin for a new trade
+tradingAccountSchema.methods.hasEnoughMargin = function(requiredMargin, floatingPnL = 0) {
+  const freeMargin = this.calculateFreeMargin(floatingPnL);
+  return freeMargin >= requiredMargin;
+};
+
+// Lock margin for a new trade (doesn't deduct from balance)
+tradingAccountSchema.methods.lockMargin = function(marginAmount) {
+  this.margin += marginAmount;
+  this.freeMargin = this.equity - this.margin;
+  return this.margin;
+};
+
+// Release margin when trade closes
+tradingAccountSchema.methods.releaseMargin = function(marginAmount) {
+  this.margin -= marginAmount;
+  if (this.margin < 0) this.margin = 0;
+  this.freeMargin = this.equity - this.margin;
+  return this.margin;
+};
+
+// Settle trade P/L to balance (called when trade closes)
+tradingAccountSchema.methods.settlePnL = function(pnl) {
+  this.balance += pnl;
+  if (this.balance < 0) this.balance = 0; // Prevent negative balance
+  this.equity = this.balance; // Reset equity to balance (no floating PnL after close)
+  this.freeMargin = this.equity - this.margin;
+  return this.balance;
+};
+
+// Get full account status with all calculations
+tradingAccountSchema.methods.getAccountStatus = function(floatingPnL = 0) {
+  const equity = this.balance + floatingPnL;
+  const freeMargin = equity - this.margin;
+  const marginLevel = this.margin > 0 ? (equity / this.margin) * 100 : 0;
+  
+  return {
+    balance: this.balance,
+    equity: equity,
+    margin: this.margin,
+    freeMargin: freeMargin,
+    marginLevel: marginLevel,
+    floatingPnL: floatingPnL
+  };
 };
 
 // Indexes
