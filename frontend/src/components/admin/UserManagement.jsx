@@ -27,6 +27,10 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ totalUsers: 0, activeUsers: 0, verifiedUsers: 0, inactiveUsers: 0 })
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [usersPerPage] = useState(10)
+  
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -265,7 +269,40 @@ const UserManagement = () => {
     }
   }
 
-  const filteredUsers = users
+  // Pagination logic
+  const totalPages = Math.ceil(users.length / usersPerPage)
+  const indexOfLastUser = currentPage * usersPerPage
+  const indexOfFirstUser = indexOfLastUser - usersPerPage
+  const paginatedUsers = users.slice(indexOfFirstUser, indexOfLastUser)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, filterStatus])
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+    }
+  }
+
+  const getPageNumbers = () => {
+    const pages = []
+    const maxVisiblePages = 5
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1)
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i)
+    }
+    return pages
+  }
+
+  const filteredUsers = paginatedUsers
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -454,13 +491,36 @@ const UserManagement = () => {
 
         {/* Pagination */}
         <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: '1px solid var(--border-color)' }}>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Showing {filteredUsers.length} of {users.length} users</p>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Showing {indexOfFirstUser + 1}-{Math.min(indexOfLastUser, users.length)} of {users.length} users
+          </p>
           <div className="flex items-center gap-2">
-            <button className="px-3 py-1 rounded-lg text-sm" style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-secondary)' }}>Previous</button>
-            <button className="px-3 py-1 rounded-lg text-sm bg-blue-500 text-white">1</button>
-            <button className="px-3 py-1 rounded-lg text-sm" style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-secondary)' }}>2</button>
-            <button className="px-3 py-1 rounded-lg text-sm" style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-secondary)' }}>3</button>
-            <button className="px-3 py-1 rounded-lg text-sm" style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-secondary)' }}>Next</button>
+            <button 
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+              style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-secondary)' }}
+            >
+              Previous
+            </button>
+            {getPageNumbers().map(page => (
+              <button 
+                key={page}
+                onClick={() => goToPage(page)}
+                className={`px-3 py-1 rounded-lg text-sm ${currentPage === page ? 'bg-blue-500 text-white' : ''}`}
+                style={currentPage !== page ? { backgroundColor: 'var(--bg-hover)', color: 'var(--text-secondary)' } : {}}
+              >
+                {page}
+              </button>
+            ))}
+            <button 
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="px-3 py-1 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed" 
+              style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-secondary)' }}
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>

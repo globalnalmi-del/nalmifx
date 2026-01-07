@@ -29,6 +29,7 @@ const Orders = () => {
   const [dateTo, setDateTo] = useState('')
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
   const [prices, setPrices] = useState({})
+  const [cancellingId, setCancellingId] = useState(null)
 
   const getAuthHeader = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -187,6 +188,23 @@ const Orders = () => {
     
     const pnl = priceDiff * amount * contractSize
     return pnl - (trade.tradingCharge || trade.commission || 0)
+  }
+
+  // Cancel pending order
+  const handleCancelPending = async (tradeId) => {
+    if (!confirm('Are you sure you want to cancel this pending order?')) return
+    
+    setCancellingId(tradeId)
+    try {
+      const res = await axios.put(`/api/trades/${tradeId}/cancel`, {}, getAuthHeader())
+      if (res.data.success) {
+        fetchData(false) // Refresh trades list
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to cancel order')
+    } finally {
+      setCancellingId(null)
+    }
   }
 
   const downloadStatement = (format) => {
@@ -398,6 +416,9 @@ const Orders = () => {
                   <th className="text-left py-4 px-4 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>SL/TP</th>
                   <th className="text-left py-4 px-4 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>P&L</th>
                   <th className="text-left py-4 px-4 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Status</th>
+                  {activeTab === 'pending' && (
+                    <th className="text-left py-4 px-4 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Action</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -444,6 +465,22 @@ const Orders = () => {
                         {trade.status}
                       </span>
                     </td>
+                    {activeTab === 'pending' && (
+                      <td className="py-4 px-4">
+                        <button
+                          onClick={() => handleCancelPending(trade._id)}
+                          disabled={cancellingId === trade._id}
+                          className="p-2 rounded-lg hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                          title="Cancel Pending Order"
+                        >
+                          {cancellingId === trade._id ? (
+                            <Loader2 size={16} className="animate-spin text-red-500" />
+                          ) : (
+                            <XCircle size={16} className="text-red-500" />
+                          )}
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
