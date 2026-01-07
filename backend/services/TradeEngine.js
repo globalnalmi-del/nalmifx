@@ -211,6 +211,40 @@ class TradeEngine {
   }
 
   /**
+   * Calculate used margin from all open trades for wallet-based trading
+   * This ensures users can't place unlimited trades from their wallet
+   */
+  async calculateUsedMarginFromTrades(userId, tradingAccountId = null) {
+    try {
+      const query = { 
+        user: userId, 
+        status: 'open'
+      };
+      // For wallet-based trading, only count trades without a trading account
+      if (tradingAccountId === null) {
+        query.tradingAccount = null;
+      } else {
+        query.tradingAccount = tradingAccountId;
+      }
+      
+      const openTrades = await Trade.find(query);
+      let totalUsedMargin = 0;
+      
+      for (const trade of openTrades) {
+        // Use stored margin or calculate it
+        const tradeMargin = trade.margin || ((trade.amount * trade.price * this.getContractSize(trade.symbol)) / trade.leverage);
+        totalUsedMargin += tradeMargin;
+      }
+      
+      console.log(`[TradeEngine] Used margin from ${openTrades.length} open trades (wallet): $${totalUsedMargin.toFixed(2)}`);
+      return totalUsedMargin;
+    } catch (error) {
+      console.error('[TradeEngine] Error calculating used margin from trades:', error);
+      return 0;
+    }
+  }
+
+  /**
    * Check if market is open for a symbol
    */
   checkMarketHours(symbol) {
@@ -338,11 +372,14 @@ class TradeEngine {
     // Calculate current floating P/L for all open trades
     const floatingPnL = usesTradingAccount 
       ? await this.calculateFloatingPnL(userId, tradingAccount._id)
-      : 0;
+      : await this.calculateFloatingPnL(userId, null);
     
     // Calculate equity and free margin
+    // For wallet-based trading, calculate used margin from open trades
     const equity = availableBalance + floatingPnL;
-    const currentUsedMargin = usesTradingAccount ? tradingAccount.margin : 0;
+    const currentUsedMargin = usesTradingAccount 
+      ? tradingAccount.margin 
+      : await this.calculateUsedMarginFromTrades(userId, null);
     const freeMargin = equity - currentUsedMargin;
     
     // Total required = margin for new trade + commission
@@ -737,9 +774,11 @@ class TradeEngine {
        */
       const floatingPnL = usesTradingAccount 
         ? await this.calculateFloatingPnL(userId, tradingAccount._id)
-        : 0;
+        : await this.calculateFloatingPnL(userId, null);
       const equity = availableBalance + floatingPnL;
-      const currentUsedMargin = usesTradingAccount ? tradingAccount.margin : 0;
+      const currentUsedMargin = usesTradingAccount 
+        ? tradingAccount.margin 
+        : await this.calculateUsedMarginFromTrades(userId, null);
       const freeMargin = equity - currentUsedMargin;
       
       // Check if free margin is enough (margin + commission)
