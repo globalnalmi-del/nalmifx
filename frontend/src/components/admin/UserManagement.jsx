@@ -16,7 +16,9 @@ import {
   DollarSign,
   X,
   Loader2,
-  Key
+  Key,
+  PlusCircle,
+  MinusCircle
 } from 'lucide-react'
 import axios from 'axios'
 
@@ -53,6 +55,12 @@ const UserManagement = () => {
     isDemo: false,
     nickname: ''
   })
+  
+  // Fund management modal states
+  const [showFundModal, setShowFundModal] = useState(false)
+  const [fundAction, setFundAction] = useState('add') // 'add' or 'deduct'
+  const [fundAmount, setFundAmount] = useState('')
+  const [fundDescription, setFundDescription] = useState('')
 
   const getAuthHeader = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
@@ -269,6 +277,50 @@ const UserManagement = () => {
     }
   }
 
+  // Handle Add/Deduct Fund
+  const openFundModal = (user, action) => {
+    setSelectedUser(user)
+    setFundAction(action)
+    setFundAmount('')
+    setFundDescription('')
+    setShowFundModal(true)
+  }
+
+  const handleFundAction = async (e) => {
+    e.preventDefault()
+    if (!fundAmount || parseFloat(fundAmount) <= 0) {
+      alert('Please enter a valid amount')
+      return
+    }
+    
+    setActionLoading(true)
+    try {
+      const endpoint = fundAction === 'add' 
+        ? '/api/admin/wallet/add-funds' 
+        : '/api/admin/wallet/deduct-funds'
+      
+      const description = fundDescription || (fundAction === 'add' 
+        ? 'Credit from Admin' 
+        : 'Debit from Admin')
+      
+      const res = await axios.post(endpoint, {
+        userId: selectedUser._id,
+        amount: parseFloat(fundAmount),
+        description
+      }, getAuthHeader())
+      
+      if (res.data.success) {
+        setShowFundModal(false)
+        fetchUsers()
+        alert(res.data.message)
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error processing fund action')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   // Pagination logic
   const totalPages = Math.ceil(users.length / usersPerPage)
   const indexOfLastUser = currentPage * usersPerPage
@@ -465,6 +517,12 @@ const UserManagement = () => {
                     <td className="py-4 px-4 text-sm" style={{ color: 'var(--text-muted)' }}>{new Date(user.createdAt).toLocaleDateString()}</td>
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-1">
+                        <button onClick={() => openFundModal(user, 'add')} className="p-2 rounded-lg hover:bg-opacity-80" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }} title="Add Fund">
+                          <PlusCircle size={16} style={{ color: '#22c55e' }} />
+                        </button>
+                        <button onClick={() => openFundModal(user, 'deduct')} className="p-2 rounded-lg hover:bg-opacity-80" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }} title="Deduct Fund">
+                          <MinusCircle size={16} style={{ color: '#ef4444' }} />
+                        </button>
                         <button onClick={() => openEditModal(user)} className="p-2 rounded-lg hover:bg-opacity-80" style={{ backgroundColor: 'var(--bg-hover)' }} title="Edit">
                           <Edit size={16} style={{ color: 'var(--text-secondary)' }} />
                         </button>
@@ -804,6 +862,75 @@ const UserManagement = () => {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Add/Deduct Fund Modal */}
+      {showFundModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="w-full max-w-md rounded-2xl p-6" style={{ backgroundColor: 'var(--bg-card)' }}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {fundAction === 'add' ? 'Add Fund' : 'Deduct Fund'}
+              </h3>
+              <button onClick={() => setShowFundModal(false)} className="p-2 rounded-lg" style={{ backgroundColor: 'var(--bg-hover)' }}>
+                <X size={16} style={{ color: 'var(--text-muted)' }} />
+              </button>
+            </div>
+            
+            <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'var(--bg-hover)' }}>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>User</p>
+              <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{selectedUser.firstName} {selectedUser.lastName}</p>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{selectedUser.email}</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Current Balance: <span className="font-semibold">${(selectedUser.balance || 0).toFixed(2)}</span></p>
+            </div>
+            
+            <form onSubmit={handleFundAction}>
+              <div className="mb-4">
+                <label className="block text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>Amount ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={fundAmount}
+                  onChange={(e) => setFundAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className="w-full px-4 py-3 rounded-xl text-sm"
+                  style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                  required
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>Description (Optional)</label>
+                <input
+                  type="text"
+                  value={fundDescription}
+                  onChange={(e) => setFundDescription(e.target.value)}
+                  placeholder={fundAction === 'add' ? 'Credit from Admin' : 'Debit from Admin'}
+                  className="w-full px-4 py-3 rounded-xl text-sm"
+                  style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowFundModal(false)}
+                  className="flex-1 py-3 rounded-xl font-medium"
+                  style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-secondary)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="flex-1 py-3 rounded-xl font-medium text-white disabled:opacity-50"
+                  style={{ backgroundColor: fundAction === 'add' ? '#22c55e' : '#ef4444' }}
+                >
+                  {actionLoading ? 'Processing...' : (fundAction === 'add' ? 'Add Fund' : 'Deduct Fund')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
