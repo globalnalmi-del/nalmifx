@@ -315,6 +315,41 @@ const MobileChart = () => {
         </button>
       </div>
 
+      {/* Symbol Info Bar - OHLC Data */}
+      <div 
+        className="flex items-center gap-2 px-2 py-1 overflow-x-auto"
+        style={{ 
+          backgroundColor: isDark ? '#0a0a0a' : '#fff', 
+          borderBottom: `1px solid ${isDark ? '#1a1a1a' : '#e5e5ea'}`,
+          fontSize: '10px'
+        }}
+      >
+        <span className="font-medium whitespace-nowrap" style={{ color: isDark ? '#fff' : '#000' }}>
+          {selectedSymbol.includes('USD') && selectedSymbol.includes('CHF') ? 'U.S. Dollar / Swiss Franc' :
+           selectedSymbol.includes('EUR') && selectedSymbol.includes('USD') ? 'Euro / U.S. Dollar' :
+           selectedSymbol.includes('GBP') && selectedSymbol.includes('USD') ? 'British Pound / U.S. Dollar' :
+           selectedSymbol.includes('USD') && selectedSymbol.includes('JPY') ? 'U.S. Dollar / Japanese Yen' :
+           selectedSymbol.includes('AUD') && selectedSymbol.includes('USD') ? 'Australian Dollar / U.S. Dollar' :
+           selectedSymbol.includes('USD') && selectedSymbol.includes('CAD') ? 'U.S. Dollar / Canadian Dollar' :
+           selectedSymbol.includes('NZD') && selectedSymbol.includes('USD') ? 'New Zealand Dollar / U.S. Dollar' :
+           selectedSymbol.includes('XAU') ? 'Gold Spot / U.S. Dollar' :
+           selectedSymbol.includes('XAG') ? 'Silver Spot / U.S. Dollar' :
+           selectedSymbol.includes('BTC') ? 'Bitcoin / U.S. Dollar' :
+           selectedSymbol.includes('ETH') ? 'Ethereum / U.S. Dollar' :
+           selectedSymbol}
+        </span>
+        <span style={{ color: isDark ? '#6b7280' : '#9ca3af' }}>·</span>
+        <span style={{ color: isDark ? '#6b7280' : '#9ca3af' }}>5m</span>
+        <span style={{ color: isDark ? '#6b7280' : '#9ca3af' }}>·</span>
+        <span style={{ color: isDark ? '#6b7280' : '#9ca3af' }}>FXCM</span>
+        <div className="flex items-center gap-1 ml-1 whitespace-nowrap">
+          <span style={{ color: '#22c55e' }}>O<span style={{ color: isDark ? '#fff' : '#000' }}>{formatPrice(price.bid, selectedSymbol)}</span></span>
+          <span style={{ color: '#22c55e' }}>H<span style={{ color: isDark ? '#fff' : '#000' }}>{formatPrice(price.ask * 1.0001, selectedSymbol)}</span></span>
+          <span style={{ color: '#ef4444' }}>L<span style={{ color: isDark ? '#fff' : '#000' }}>{formatPrice(price.bid * 0.9999, selectedSymbol)}</span></span>
+          <span style={{ color: '#22c55e' }}>C<span style={{ color: isDark ? '#fff' : '#000' }}>{formatPrice(price.ask, selectedSymbol)}</span></span>
+        </div>
+      </div>
+
       {/* Chart Area - Fixed height using viewport units for reliability */}
       <div style={{ 
         height: '35vh', 

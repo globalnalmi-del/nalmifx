@@ -584,6 +584,37 @@ function App({ initialView = 'home' }) {
             
           </div>
           
+          {/* Symbol Info Bar - OHLC Data */}
+          <div 
+            className="h-6 flex items-center gap-3 px-2 text-xs flex-shrink-0"
+            style={{ backgroundColor: 'var(--bg-primary)', borderBottom: '1px solid var(--border-color)' }}
+          >
+            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+              {selectedSymbol.includes('USD') && selectedSymbol.includes('CHF') ? 'U.S. Dollar / Swiss Franc' :
+               selectedSymbol.includes('EUR') && selectedSymbol.includes('USD') ? 'Euro / U.S. Dollar' :
+               selectedSymbol.includes('GBP') && selectedSymbol.includes('USD') ? 'British Pound / U.S. Dollar' :
+               selectedSymbol.includes('USD') && selectedSymbol.includes('JPY') ? 'U.S. Dollar / Japanese Yen' :
+               selectedSymbol.includes('AUD') && selectedSymbol.includes('USD') ? 'Australian Dollar / U.S. Dollar' :
+               selectedSymbol.includes('USD') && selectedSymbol.includes('CAD') ? 'U.S. Dollar / Canadian Dollar' :
+               selectedSymbol.includes('NZD') && selectedSymbol.includes('USD') ? 'New Zealand Dollar / U.S. Dollar' :
+               selectedSymbol.includes('XAU') ? 'Gold Spot / U.S. Dollar' :
+               selectedSymbol.includes('XAG') ? 'Silver Spot / U.S. Dollar' :
+               selectedSymbol.includes('BTC') ? 'Bitcoin / U.S. Dollar' :
+               selectedSymbol.includes('ETH') ? 'Ethereum / U.S. Dollar' :
+               selectedSymbol}
+            </span>
+            <span style={{ color: 'var(--text-muted)' }}>·</span>
+            <span style={{ color: 'var(--text-muted)' }}>5m</span>
+            <span style={{ color: 'var(--text-muted)' }}>·</span>
+            <span style={{ color: 'var(--text-muted)' }}>FXCM</span>
+            <div className="flex items-center gap-2 ml-2">
+              <span style={{ color: '#22c55e' }}>O<span style={{ color: 'var(--text-primary)' }}>{livePrices.bid?.toFixed(getDecimals(selectedSymbol))}</span></span>
+              <span style={{ color: '#22c55e' }}>H<span style={{ color: 'var(--text-primary)' }}>{(livePrices.ask * 1.0001)?.toFixed(getDecimals(selectedSymbol))}</span></span>
+              <span style={{ color: '#ef4444' }}>L<span style={{ color: 'var(--text-primary)' }}>{(livePrices.bid * 0.9999)?.toFixed(getDecimals(selectedSymbol))}</span></span>
+              <span style={{ color: '#22c55e' }}>C<span style={{ color: 'var(--text-primary)' }}>{livePrices.ask?.toFixed(getDecimals(selectedSymbol))}</span></span>
+            </div>
+          </div>
+          
           {/* Chart Area */}
           <div className="flex-1 flex" style={{ minHeight: 0 }}>
             {/* Main Chart */}

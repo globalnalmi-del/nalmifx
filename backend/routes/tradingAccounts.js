@@ -323,7 +323,7 @@ router.post('/transfer', protect, async (req, res) => {
         amount: -amount,
         description: `Transfer to trading account ${toAccount.accountNumber}`,
         status: 'completed',
-        reference: transfer._id
+        reference: `TRF-${transfer._id.toString()}`
       });
     }
     
@@ -334,7 +334,7 @@ router.post('/transfer', protect, async (req, res) => {
         amount: amount,
         description: `Transfer from trading account ${fromAccount.accountNumber}`,
         status: 'completed',
-        reference: transfer._id
+        reference: `TRF-${transfer._id.toString()}`
       });
     }
     
